@@ -1,0 +1,40 @@
+---
+interface Props {
+  current?: string;
+}
+const { current } = Astro.props;
+
+const items = [
+  { label: 'Home', href: '/' },
+  { label: 'Playground', href: '/play' },
+  { label: 'Architecture', href: '/architecture' },
+  { label: 'Thesis', href: '/research/thesis' },
+  { label: 'Prior art', href: '/research/prior-art' },
+  { label: 'Changelog', href: '/changelog' },
+];
+---
+
+<header class="rule-bottom sticky top-0 bg-cream/95 backdrop-blur z-20">
+  <div class="max-w-wide mx-auto px-6 md:px-10 py-4 flex items-center justify-between gap-6">
+    <a href="/" class="no-underline flex items-baseline gap-2 shrink-0">
+      <span class="font-serif text-2xl text-accent" style="font-weight:500">ν</span>
+      <span class="font-serif text-xl tracking-tight" style="font-weight:500">Nomos</span>
+      <span class="chip ml-3 hidden md:inline-flex">Experimental</span>
+    </a>
+    <nav class="flex items-center gap-4 md:gap-5 text-[13px] text-sub overflow-x-auto">
+      {items.map((i) => (
+        <a
+          href={i.href}
+          class={`no-underline whitespace-nowrap ${current === i.href ? 'text-ink font-medium' : 'hover:text-ink'}`}>
+          {i.label}
+        </a>
+      ))}
+      <a
+        href="https://github.com/sboghossian/nomos"
+        target="_blank"
+        class="no-underline shrink-0 chip chip-accent">
+        GitHub ↗
+      </a>
+    </nav>
+  </div>
+</header>

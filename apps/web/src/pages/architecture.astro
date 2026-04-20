@@ -1,0 +1,270 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+
+const repo = 'https://github.com/sboghossian/nomos/blob/main';
+
+const stages = [
+  {
+    name: 'Source',
+    sub: 'contract.nomos',
+    detail: 'Human-written rules, types, facts, queries.',
+    href: `${repo}/packages/core/test/fixtures/non_compete_fr.nomos`,
+    tone: 'ink',
+  },
+  {
+    name: 'Lexer',
+    sub: 'tokens.ts',
+    detail: 'Chevrotain token definitions — 22 keywords + literals + punctuation.',
+    href: `${repo}/packages/core/src/tokens.ts`,
+    tone: 'ink',
+  },
+  {
+    name: 'Parser',
+    sub: 'parser.ts',
+    detail: 'CST parser + visitor → typed AST.',
+    href: `${repo}/packages/core/src/parser.ts`,
+    tone: 'ink',
+  },
+  {
+    name: 'Checker',
+    sub: 'checker.ts',
+    detail: 'Name resolution, symbol table, diagnostics.',
+    href: `${repo}/packages/core/src/checker.ts`,
+    tone: 'ink',
+  },
+  {
+    name: 'Fact resolver',
+    sub: 'llm/resolve.ts',
+    detail: 'Calls OpenRouter for every extract<T>. JSON Schema derived from TypeRef. Self-rated confidence.',
+    href: `${repo}/packages/llm/src/resolve.ts`,
+    tone: 'accent',
+    async: true,
+  },
+  {
+    name: 'Evaluator',
+    sub: 'evaluator.ts',
+    detail: 'Expression evaluator + rule engine. Temporal validity, is-predicates, binary ops.',
+    href: `${repo}/packages/core/src/evaluator.ts`,
+    tone: 'ink',
+  },
+  {
+    name: 'Defeasibility solver',
+    sub: 'evaluator.ts · evaluate()',
+    detail: 'Priority-based conflict resolution. Specificity + recency arriving soon.',
+    href: `${repo}/packages/core/src/evaluator.ts#L150`,
+    tone: 'accent',
+  },
+  {
+    name: 'Verdict + proof tree',
+    sub: 'EvalResult',
+    detail: 'Value, winning rule, defeated rules, authorities, per-rule traces.',
+    href: `${repo}/packages/core/src/evaluator.ts#L50`,
+    tone: 'ink',
+  },
+];
+
+const surfaces = [
+  {
+    name: 'CLI',
+    sub: 'nomos run',
+    detail: 'Terminal-first. Ships with Node.',
+    href: `${repo}/packages/cli`,
+  },
+  {
+    name: 'Playground',
+    sub: '/play',
+    detail: 'Browser. Same parser + evaluator compile to the client via Vite.',
+    href: '/play',
+  },
+  {
+    name: 'Proxy API',
+    sub: 'nomos-api.dashable.dev',
+    detail: 'Holds the OpenRouter key; rate-limits 20/hour per IP.',
+    href: `${repo}/apps/api`,
+  },
+  {
+    name: 'Claude Skill',
+    sub: 'nomos-reason',
+    detail: 'Reasons over a Nomos program from inside Claude Code.',
+    href: '#',
+    coming: true,
+  },
+  {
+    name: 'VS Code LSP',
+    sub: 'nomos-lsp',
+    detail: 'Syntax + hover + diagnostics.',
+    href: '#',
+    coming: true,
+  },
+];
+
+const reuse = [
+  { name: 'Eyecite', role: 'Citation parser (US).', href: 'https://github.com/freelawproject/eyecite', coming: true },
+  { name: 'Concerto', role: 'Type system base.', href: 'https://github.com/accordproject/concerto', coming: true },
+  { name: 'Akoma Ntoso', role: 'Legislation import format.', href: 'http://www.akomantoso.org/', coming: true },
+  { name: 'CUAD / MAUD / ACORD', role: 'Extraction benchmarks.', href: 'https://www.atticusprojectai.org/' },
+  { name: 'OpenRouter', role: 'LLM gateway.', href: 'https://openrouter.ai' },
+];
+---
+
+<Layout title="Nomos · Architecture" description="How the Nomos compiler and runtime fit together. Pipeline, surfaces, and the open-source stack we sit on top of.">
+  <Nav current="/architecture" />
+
+  <!-- Intro -->
+  <section class="max-w-wide mx-auto px-6 md:px-10 py-16 md:py-24">
+    <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Architecture</span>
+    <h1 class="mt-4 max-w-[24ch]">How Nomos works, <span class="text-accent italic">end to end.</span></h1>
+    <p class="mt-8 text-xl md:text-2xl max-w-prose text-sub font-serif" style="font-weight:400; line-height:1.45;">
+      A <em>.nomos</em> file becomes a verdict with a proof tree in four stages. Everything is
+      deterministic except the fact resolver — which is why the fact resolver carries
+      confidence, authority, and a path to human review.
+    </p>
+    <p class="mt-6 text-sub">
+      Every box below links to the actual file in the repository. Nomos is ~15% new
+      code; the rest stands on the shoulders of permissively-licensed OSS — see the
+      stack at the bottom of this page.
+    </p>
+  </section>
+
+  <!-- The pipeline diagram -->
+  <section class="rule-top bg-white">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-16">
+      <div class="mb-10 flex items-baseline gap-4">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 01</span>
+        <h2 class="font-serif">The compiler pipeline.</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 relative">
+        {stages.map((s, i) => (
+          <a
+            href={s.href}
+            target="_blank"
+            class={`group block border p-5 no-underline transition-colors bg-cream ${
+              s.tone === 'accent'
+                ? 'border-accent-soft/40 hover:bg-accent-bg'
+                : 'border-rule hover:border-accent-soft/40'
+            }`}>
+            <div class="flex items-baseline justify-between gap-3">
+              <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ {String(i + 1).padStart(2, '0')}</span>
+              {s.async && (
+                <span class="chip chip-accent">async · LLM</span>
+              )}
+            </div>
+            <div class="mt-2">
+              <h3 class="font-serif text-xl" style="font-weight:500">{s.name}</h3>
+              <p class="mt-0.5 font-mono text-[12px] text-accent">{s.sub}</p>
+            </div>
+            <p class="mt-3 text-sub text-[14px]">{s.detail}</p>
+            <span class="mt-3 inline-block font-mono text-[11px] text-mute group-hover:text-accent">
+              view source ↗
+            </span>
+          </a>
+        ))}
+      </div>
+
+      <!-- Flow caption -->
+      <div class="mt-10 grid md:grid-cols-3 gap-6 text-[13px] text-sub">
+        <div class="border-l-2 border-accent-soft/40 pl-4">
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">input</span>
+          <p class="mt-1">The user writes Nomos source + supplies facts via JSON or by pointing at source documents the LLM will read.</p>
+        </div>
+        <div class="border-l-2 border-accent-soft/40 pl-4">
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">transform</span>
+          <p class="mt-1">Lex → Parse → Check → Resolve facts (via LLM if any). The fact resolver is the only non-deterministic stage.</p>
+        </div>
+        <div class="border-l-2 border-accent-soft/40 pl-4">
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">output</span>
+          <p class="mt-1">A <em>Value</em> + a proof tree. The proof tree names every rule, requirement, authority, and fact used — auditable end to end.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Surfaces -->
+  <section class="rule-top">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-16">
+      <div class="mb-10 flex items-baseline gap-4">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 02</span>
+        <h2 class="font-serif">Surfaces.</h2>
+      </div>
+      <p class="max-w-prose mb-8">
+        The same core compiles to multiple surfaces. One parser, one evaluator, one
+        source of truth — used from a terminal, a browser, a proxy, an editor, or
+        an agent.
+      </p>
+      <div class="border-t border-rule">
+        {surfaces.map((s) => (
+          <a
+            href={s.href}
+            class={`block border-b border-rule py-5 px-2 no-underline group ${s.coming ? 'opacity-60' : 'hover:bg-accent-bg transition-colors'}`}>
+            <div class="grid md:grid-cols-[1fr_2fr_auto] gap-4 items-baseline">
+              <span class="font-serif text-lg text-ink" style="font-weight:500">
+                {s.name} {s.coming && <span class="chip ml-2">coming</span>}
+              </span>
+              <div>
+                <span class="text-sub text-[15px]">{s.detail}</span>
+                <p class="font-mono text-[11px] text-mute mt-0.5">{s.sub}</p>
+              </div>
+              <span class="font-mono text-[11px] text-mute group-hover:text-accent">
+                {s.coming ? '—' : 'open ↗'}
+              </span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Stack -->
+  <section class="rule-top bg-white">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-16">
+      <div class="mb-10 flex items-baseline gap-4">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 03</span>
+        <h2 class="font-serif">What we stand on.</h2>
+      </div>
+      <p class="max-w-prose mb-8">
+        Nomos is not built from scratch. The field has fifty years of work; we extend
+        it. Every tool below is permissively licensed and battle-tested somewhere
+        that matters.
+      </p>
+      <div class="border-t border-rule">
+        {reuse.map((r) => (
+          <a
+            href={r.href}
+            target="_blank"
+            class={`block border-b border-rule py-5 px-2 no-underline group ${r.coming ? 'opacity-60' : 'hover:bg-accent-bg transition-colors'}`}>
+            <div class="grid md:grid-cols-[1fr_2fr_auto] gap-4 items-baseline">
+              <span class="font-serif text-lg" style="font-weight:500">
+                {r.name} {r.coming && <span class="chip ml-2">integration planned</span>}
+              </span>
+              <span class="text-sub text-[15px]">{r.role}</span>
+              <span class="font-mono text-[11px] text-mute group-hover:text-accent">↗</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Read next -->
+  <section class="rule-top">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-16 grid md:grid-cols-3 gap-6">
+      <a href="/research/thesis" class="border border-rule p-6 no-underline hover:bg-accent-bg transition-colors">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Next</span>
+        <h3 class="font-serif text-xl mt-2" style="font-weight:500">The thesis →</h3>
+        <p class="mt-2 text-sub text-[15px]">Why Nomos exists, and what makes its wedge defensible after fifty years of rules-as-code attempts.</p>
+      </a>
+      <a href="/research/prior-art" class="border border-rule p-6 no-underline hover:bg-accent-bg transition-colors">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Context</span>
+        <h3 class="font-serif text-xl mt-2" style="font-weight:500">Prior art →</h3>
+        <p class="mt-2 text-sub text-[15px]">Catala, OpenFisca, Blawx, Kowalski's British Nationality Act, and the others. What we borrow, what we leave.</p>
+      </a>
+      <a href="/changelog" class="border border-rule p-6 no-underline hover:bg-accent-bg transition-colors">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Build log</span>
+        <h3 class="font-serif text-xl mt-2" style="font-weight:500">Changelog →</h3>
+        <p class="mt-2 text-sub text-[15px]">Every slice, shipped in public. Nomos is built in the open, commit by commit.</p>
+      </a>
+    </div>
+  </section>
+</Layout>

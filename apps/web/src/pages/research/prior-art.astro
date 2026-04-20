@@ -1,0 +1,243 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+
+const languages = [
+  {
+    name: 'Catala',
+    org: 'Inria',
+    year: '2020–present',
+    status: 'active',
+    statusClass: 'accent',
+    url: 'https://catala-lang.org/',
+    thesis: 'Default logic as a first-class feature, mirroring how legislation structures exceptions. Compiles annotated legislation to OCaml/Python. Lawyer-readable PDFs.',
+    takeFromIt: 'The default-logic design (Lawsky 2017); the article-style syntax; the provenance discipline; the possible reuse of its IR.',
+    leaveBehind: 'OCaml-first toolchain; no LLM integration; academic DX; heavy specification burden.',
+  },
+  {
+    name: 'OpenFisca',
+    org: 'France, Etalab',
+    year: '2011–present',
+    status: 'active',
+    statusClass: 'accent',
+    url: 'https://openfisca.org/',
+    thesis: 'Tax and benefit law modeled as typed Python. Production-deployed by multiple governments (FR, UK, NZ, Tunisia, Senegal).',
+    takeFromIt: 'Proof that rules-as-code works at government scale. Tax-rule modeling patterns. Parameter vs. variable distinction.',
+    leaveBehind: 'Python-only; imperative; no temporal typing; no LLM bridge.',
+  },
+  {
+    name: 'Blawx',
+    org: 'Lexpedite / Jason Morris',
+    year: '2020–present',
+    status: 'active',
+    statusClass: 'accent',
+    url: 'https://app.blawx.dev/',
+    thesis: 'Visual rules-as-code for lawyers over s(CASP) — a goal-directed ASP engine. Generates natural-language explanations for every answer.',
+    takeFromIt: 'Explanation-first UX. Lawyer-as-primary-user framing. The CodeX Prize ecosystem.',
+    leaveBehind: 'Visual/Blockly interface for us — not where serious adoption lives. Prolog runtime dependency.',
+  },
+  {
+    name: 'Logical English',
+    org: 'Kowalski / Imperial',
+    year: '2020–present',
+    status: 'active',
+    statusClass: 'accent',
+    url: 'https://www.doc.ic.ac.uk/~rak/papers/LogicalEnglish.pdf',
+    thesis: 'Controlled natural language compiles to Prolog. Lawyers write near-English prose that an engine can reason over.',
+    takeFromIt: 'The controlled-natural-language idea as a possible future frontend. Kowalski\'s framing of law-as-logic.',
+    leaveBehind: 'Small tooling; research-only; parsing ambiguities that prose brings.',
+  },
+  {
+    name: 's(CASP)',
+    org: 'various',
+    year: 'research',
+    status: 'academic',
+    statusClass: 'mute',
+    url: 'https://gitlab.software.imdea.org/ciao-lang/sCASP',
+    thesis: 'Goal-directed Answer Set Programming with automatic justification traces. Blawx uses it as its engine.',
+    takeFromIt: 'Justification-tracking as a runtime property. Possible backend option for Nomos later.',
+    leaveBehind: 'SWI-Prolog dependency; niche community; poor browser story.',
+  },
+  {
+    name: 'LegalRuleML',
+    org: 'OASIS',
+    year: '2013–present',
+    status: 'standard',
+    statusClass: 'mute',
+    url: 'https://www.oasis-open.org/committees/legalruleml/',
+    thesis: 'XML interchange format for legal rules. Interop between rule engines.',
+    takeFromIt: 'A possible interop export target. The abstract model of rule + exception + defeasibility.',
+    leaveBehind: 'Not a programming language. Verbose. Not what humans write directly.',
+  },
+  {
+    name: 'Accord Project / Ergo',
+    org: 'Linux Foundation',
+    year: '2018–~2022',
+    status: 'dormant',
+    statusClass: 'mute',
+    url: 'https://accordproject.org/',
+    thesis: 'Smart legal contracts. Cicero templates + Ergo DSL + Concerto data models.',
+    takeFromIt: 'Concerto (still alive) as a type-system base. Contract-specific vocabulary.',
+    leaveBehind: 'Ergo itself is largely dormant. Blockchain framing. Template brittleness.',
+  },
+  {
+    name: 'L4',
+    org: 'Singapore Management University',
+    year: '2019–present',
+    status: 'research',
+    statusClass: 'mute',
+    url: 'https://l4-lang.org/',
+    thesis: 'Haskell-based legal DSL with formal verification and visualization.',
+    takeFromIt: 'Multi-target compilation (LP, English, diagrams). Attention to formal semantics.',
+    leaveBehind: 'Small community; Haskell barrier; research-only.',
+  },
+  {
+    name: 'Symboleo',
+    org: 'U. of Toronto',
+    year: '2020–present',
+    status: 'research',
+    statusClass: 'mute',
+    url: 'https://www.symboleo.com/',
+    thesis: 'Formal contract specification language with runtime monitoring.',
+    takeFromIt: 'Event-based semantics for contract performance. Obligation/right/permission algebra.',
+    leaveBehind: 'Narrow contract focus; research prototype.',
+  },
+  {
+    name: 'Kowalski et al. (1981)',
+    org: 'British Nationality Act',
+    year: '1981',
+    status: 'historical',
+    statusClass: 'mute',
+    url: 'https://dl.acm.org/doi/10.1145/5689.5920',
+    thesis: 'Landmark encoding of an entire statute in Prolog. Awarded the CodeX Prize in 2021.',
+    takeFromIt: 'The foundational proof that statutes are computable. A reminder that the logic was never the hard part.',
+    leaveBehind: 'Purely prose-out-of-band; all facts had to be hand-entered as Prolog terms.',
+  },
+];
+
+const reusableStack = [
+  { name: 'Eyecite', role: 'US legal citation extractor. ~3k GitHub stars. BSD.', url: 'https://github.com/freelawproject/eyecite', plannedUse: 'Wrap as Nomos\'s US citation resolver.' },
+  { name: 'CourtListener API', role: 'Authoritative US case-law archive. Free Law Project.', url: 'https://www.courtlistener.com/', plannedUse: 'Resolve case numbers → full opinions in authority references.' },
+  { name: 'Blackstone', role: 'spaCy NER pipeline for UK legal text.', url: 'https://github.com/ICLRandD/Blackstone', plannedUse: 'UK citation resolver for the UK jurisdiction pack.' },
+  { name: 'Concerto', role: 'Accord Project\'s type-modeling DSL. Still active, GSoC 2026.', url: 'https://github.com/accordproject/concerto', plannedUse: 'Type-system base, extended with temporal + defeasible annotations.' },
+  { name: 'Akoma Ntoso / LegalDocML', role: 'OASIS XML standard for legislation worldwide.', url: 'http://www.akomantoso.org/', plannedUse: 'Import statutes → emit Nomos rule skeletons.' },
+  { name: 'CUAD', role: 'Contract Understanding Atticus Dataset. 13k+ clause labels.', url: 'https://www.atticusprojectai.org/', plannedUse: 'Evaluate extract<Clause> — publish numbers in the README.' },
+  { name: 'MAUD', role: 'Merger Agreement Understanding Dataset. 47k labels.', url: 'https://www.atticusprojectai.org/', plannedUse: 'Evaluate extract<DealTerm>.' },
+  { name: 'ACORD', role: 'Atticus Clause Retrieval Dataset. 126k query-clause pairs.', url: 'https://www.atticusprojectai.org/', plannedUse: 'Evaluate retrieval-based extract operations.' },
+  { name: 'OpenRouter', role: 'LLM gateway. Used for extract<T> today.', url: 'https://openrouter.ai/', plannedUse: 'Currently integrated. See packages/llm.' },
+  { name: 'Pile of Law · MultiLegalPile · LeXFiles', role: 'Pretraining corpora (256GB → 689GB).', url: 'https://huggingface.co/datasets/pile-of-law/pile-of-law', plannedUse: 'Only if we ever need to fine-tune a Nomos-specialized extractor.' },
+  { name: 'CommonAccord', role: 'Legal-docs-as-linked-data. Prior art on structured markup.', url: 'http://www.commonaccord.org/', plannedUse: 'Cite as inspiration; possible import/export target.' },
+  { name: 'Docassemble', role: 'Guided legal interviews. ~1.5k stars.', url: 'https://docassemble.org/', plannedUse: 'Output target — compile a Nomos program to an interactive interview.' },
+  { name: 'Restate', role: 'Durable execution runtime (same choice as Weft).', url: 'https://restate.dev/', plannedUse: 'Back human-in-loop gates that must survive restarts.' },
+];
+---
+
+<Layout title="Nomos · Prior art" description="Fifty years of rules-as-code before us: Catala, OpenFisca, Blawx, Kowalski, Logical English, LegalRuleML. What Nomos takes, and what it leaves.">
+  <Nav current="/research/prior-art" />
+
+  <article class="max-w-wide mx-auto px-6 md:px-10 py-16 md:py-24">
+    <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ Research / Prior art</span>
+    <h1 class="mt-4 max-w-[26ch]">We're not the first to <span class="text-accent italic">think</span> about this.</h1>
+
+    <p class="mt-10 text-xl md:text-2xl max-w-prose text-sub font-serif" style="font-weight:400; line-height:1.45;">
+      The rules-as-code field is fifty years old. Every project below taught us
+      something; several have active teams we hope to collaborate with. Nomos is
+      best understood as a layer built on their shoulders — not a greenfield
+      replacement.
+    </p>
+
+    <div class="mt-10">
+      <a href="/research/thesis" class="text-[14px] font-mono text-accent no-underline">← back to the thesis</a>
+    </div>
+
+    <hr class="my-16 border-rule" />
+
+    <!-- Languages / systems -->
+    <section>
+      <div class="mb-8 flex items-baseline gap-4">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 01</span>
+        <h2 class="font-serif">Languages, systems, and research programs.</h2>
+      </div>
+
+      <div class="space-y-10">
+        {languages.map((l) => (
+          <div class="grid md:grid-cols-[220px_1fr] gap-10">
+            <div>
+              <a href={l.url} target="_blank" class="no-underline block">
+                <h3 class="font-serif text-2xl text-ink" style="font-weight:500">{l.name}</h3>
+              </a>
+              <p class="mt-1 font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+                {l.org} · {l.year}
+              </p>
+              <span class={`chip mt-3 ${l.statusClass === 'accent' ? 'chip-accent' : ''}`}>
+                {l.status}
+              </span>
+            </div>
+            <div class="max-w-prose space-y-3">
+              <p>{l.thesis}</p>
+              <div class="border-l-2 border-accent-soft/40 pl-4">
+                <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">take</span>
+                <p class="mt-1 text-[15px]">{l.takeFromIt}</p>
+              </div>
+              <div class="border-l-2 border-rule pl-4">
+                <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">leave</span>
+                <p class="mt-1 text-[15px] text-mute">{l.leaveBehind}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <hr class="my-16 border-rule" />
+
+    <!-- Reusable OSS -->
+    <section>
+      <div class="mb-8 flex items-baseline gap-4">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 02</span>
+        <h2 class="font-serif">Reusable OSS — the layer below us.</h2>
+      </div>
+      <p class="max-w-prose mb-8">
+        Everything below is permissively-licensed, battle-tested, and either
+        already integrated or scheduled. Reusing these is how Nomos ships as a
+        side project instead of a PhD.
+      </p>
+      <div class="border-t border-rule">
+        {reusableStack.map((r) => (
+          <a href={r.url} target="_blank" class="block border-b border-rule py-5 px-2 no-underline hover:bg-accent-bg transition-colors group">
+            <div class="grid md:grid-cols-[1fr_2fr_auto] gap-4 items-baseline">
+              <span class="font-serif text-lg" style="font-weight:500">{r.name}</span>
+              <div class="text-[15px]">
+                <p class="text-sub">{r.role}</p>
+                <p class="mt-1 text-[13px] text-accent">→ {r.plannedUse}</p>
+              </div>
+              <span class="font-mono text-[11px] text-mute group-hover:text-accent">↗</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <hr class="my-16 border-rule" />
+
+    <!-- Credit discipline -->
+    <section class="grid md:grid-cols-[220px_1fr] gap-10">
+      <div>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 03</span>
+        <h2 class="mt-3 font-serif">Credit discipline.</h2>
+      </div>
+      <div class="max-w-prose space-y-4 text-sub">
+        <p>
+          Every paper or project above is cited in our README, our research pages,
+          and — eventually — in any academic write-up. "I didn't know about them"
+          is not a defensible position after fifty years of work.
+        </p>
+        <p>
+          If we borrow an idea, we name the source in a code comment. If we reuse
+          a library, it's a declared dependency with the upstream license. If you
+          see something unattributed, <a href="https://github.com/sboghossian/nomos/issues/new">open an issue</a>.
+        </p>
+      </div>
+    </section>
+  </article>
+</Layout>

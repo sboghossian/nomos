@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
 
 const nomosExample = `// A French non-compete clause, reasoned about as of 2026-04-18.
 
@@ -59,27 +60,21 @@ const stack = [
 ---
 
 <Layout>
-  <!-- ─────────── Top rule + nav ─────────── -->
-  <header class="rule-bottom">
-    <div class="max-w-wide mx-auto px-6 md:px-10 py-5 flex items-center justify-between">
-      <a href="/" class="no-underline flex items-baseline gap-2">
-        <span class="font-serif text-2xl text-accent" style="font-weight:500">ν</span>
-        <span class="font-serif text-xl tracking-tight" style="font-weight:500">Nomos</span>
+  <Nav current="/" />
+
+  <!-- Experimental banner -->
+  <div class="bg-accent-bg border-b border-accent-soft/30">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-2.5 flex items-center justify-between gap-4 text-[12px] md:text-[13px]">
+      <span class="text-accent">
+        <span class="font-mono uppercase tracking-[0.14em] mr-2">Experimental</span>
+        <span class="hidden md:inline">Side project, built in public. Breaking changes expected. No warranty, no vendor, no company behind it.</span>
+        <span class="md:hidden">Side project · built in public</span>
+      </span>
+      <a href="https://github.com/sboghossian/nomos" target="_blank" class="no-underline font-mono text-accent hover:underline whitespace-nowrap">
+        github.com/sboghossian/nomos ↗
       </a>
-      <nav class="flex items-center gap-6 text-[13px] text-sub">
-        <a href="#thesis" class="no-underline hover:text-ink">Thesis</a>
-        <a href="#language" class="no-underline hover:text-ink">Language</a>
-        <a href="#pillars" class="no-underline hover:text-ink">Why Nomos</a>
-        <a href="#stack" class="no-underline hover:text-ink">Stack</a>
-        <a href="#prior" class="no-underline hover:text-ink">Prior art</a>
-        <a
-          href="https://github.com/nomos-lang/nomos"
-          class="chip chip-accent no-underline">
-          GitHub
-        </a>
-      </nav>
     </div>
-  </header>
+  </div>
 
   <!-- ─────────── Hero ─────────── -->
   <section class="max-w-wide mx-auto px-6 md:px-10 pt-20 md:pt-28 pb-24 md:pb-32">
@@ -102,7 +97,7 @@ const stack = [
 
     <div class="mt-12 flex flex-wrap gap-3 items-center">
       <a
-        href="https://github.com/nomos-lang/nomos"
+        href="https://github.com/sboghossian/nomos"
         class="inline-block no-underline bg-ink text-cream px-5 py-3 text-[14px] font-medium hover:bg-accent transition-colors link-arrow">
         Read the source
       </a>
@@ -364,7 +359,7 @@ const stack = [
 
       <div class="mt-10 flex flex-wrap gap-3 justify-center">
         <a
-          href="https://github.com/nomos-lang/nomos"
+          href="https://github.com/sboghossian/nomos"
           class="inline-block no-underline bg-ink text-cream px-5 py-3 text-[14px] font-medium hover:bg-accent transition-colors link-arrow">
           Star on GitHub
         </a>
@@ -393,7 +388,7 @@ const stack = [
 
       <div class="flex flex-col gap-2">
         <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute mb-1">Project</span>
-        <a href="https://github.com/nomos-lang/nomos" class="no-underline text-sub hover:text-ink">GitHub</a>
+        <a href="https://github.com/sboghossian/nomos" class="no-underline text-sub hover:text-ink">GitHub</a>
         <a href="#" class="no-underline text-sub hover:text-ink">Docs</a>
         <a href="#" class="no-underline text-sub hover:text-ink">Playground</a>
         <a href="#" class="no-underline text-sub hover:text-ink">Changelog</a>

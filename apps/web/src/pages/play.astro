@@ -73,13 +73,17 @@ const scenarios = [
         <span class="font-serif text-xl tracking-tight" style="font-weight:500">Nomos</span>
         <span class="chip ml-3">Playground</span>
       </a>
-      <nav class="flex items-center gap-4 text-[13px] text-sub">
+      <nav class="flex items-center gap-3 text-[13px] text-sub">
         <a href="/" class="no-underline hover:text-ink">Home</a>
         <span class="font-mono text-[11px] text-mute">v0.0.1</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <input type="checkbox" id="with-llm" class="accent-accent" />
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em]">LLM</span>
+        </label>
         <button
           id="run-btn"
           class="no-underline bg-ink text-cream px-4 py-2 text-[13px] font-medium hover:bg-accent transition-colors inline-flex items-center gap-2">
-          <span>Run</span>
+          <span id="run-btn-label">Run</span>
           <span class="kbd bg-accent-soft/30 text-cream border-cream/20 text-[10px]">⌘↵</span>
         </button>
       </nav>
@@ -158,6 +162,11 @@ const scenarios = [
           <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Proof tree</span>
           <div id="proof" class="mt-3 space-y-5"></div>
 
+          <div id="extracted" class="mt-8 hidden">
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Extracted via LLM</span>
+            <ul id="extracted-list" class="mt-2 space-y-2 text-[13px] font-mono"></ul>
+          </div>
+
           <div id="diagnostics" class="mt-8 hidden">
             <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Diagnostics</span>
             <ul id="diag-list" class="mt-2 space-y-1 text-[13px] font-mono"></ul>
@@ -187,6 +196,15 @@ const scenarios = [
   const parseStatus = $('parse-status');
   const jsonStatus = $('json-status');
   const runBtn = $<HTMLButtonElement>('run-btn');
+  const runLabel = $('run-btn-label');
+  const withLlmEl = $<HTMLInputElement>('with-llm');
+  const extractedBox = $('extracted');
+  const extractedList = $('extracted-list');
+
+  const API_BASE =
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:4326'
+      : 'https://nomos-api.dashable.dev';
 
   const verdictEl = $('verdict');
   const winningEl = $('winning');
@@ -240,6 +258,7 @@ const scenarios = [
     }
   });
   runBtn.addEventListener('click', () => runAll());
+  withLlmEl.addEventListener('change', () => runAll());
 
   // ─── Core functions ─────────────────────────────────────────────────────
 
@@ -257,7 +276,7 @@ const scenarios = [
     return parsed;
   }
 
-  function runAll() {
+  async function runAll() {
     const parsed = parseOnly();
     if (!parsed.ast) {
       showDiagnostics(
@@ -302,14 +321,127 @@ const scenarios = [
     }
 
     const q = queries[0];
-    const env = envFromJson(
-      inputs,
-      q.asOf ?? new Date().toISOString().slice(0, 10),
-    );
-    const result = evaluate(parsed.ast, q, env);
+    const asOf = q.asOf ?? new Date().toISOString().slice(0, 10);
 
+    let env = envFromJson(inputs, asOf);
+    let extractedMeta: Record<string, any> = {};
+
+    // If LLM mode is on and the program has extract<T> facts, call the API.
+    const hasExtracts = parsed.ast.declarations.some(
+      (d: any) =>
+        d.kind === 'FactDecl' && d.value && d.value.kind === 'ExtractExpr',
+    );
+
+    if (withLlmEl.checked && hasExtracts) {
+      setRunning(true, 'Resolving via LLM…');
+      try {
+        const resp = await fetch(API_BASE + '/resolve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: srcEl.value, inputs, asOf }),
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({ message: resp.statusText }));
+          diagnostics.push({
+            severity: 'error',
+            message: `API ${resp.status}: ${err.message ?? 'upstream error'}`,
+            line: 0,
+            column: 0,
+          });
+          showDiagnostics(diagnostics);
+          resetVerdict();
+          setRunning(false);
+          return;
+        }
+        const data = await resp.json();
+        // Rebuild the env from the server's resolved facts.
+        const factsMap = new Map<string, any>();
+        for (const [k, v] of Object.entries(data.facts || {})) {
+          factsMap.set(k, v);
+        }
+        env = { facts: factsMap, asOf: data.asOf };
+        extractedMeta = data.meta || {};
+      } catch (e: any) {
+        diagnostics.push({
+          severity: 'error',
+          message: 'API unreachable: ' + e.message,
+          line: 0,
+          column: 0,
+        });
+        showDiagnostics(diagnostics);
+        resetVerdict();
+        setRunning(false);
+        return;
+      } finally {
+        setRunning(false);
+      }
+    }
+
+    const result = evaluate(parsed.ast, q, env);
     renderVerdict(result, q);
+    renderExtracted(env, extractedMeta);
     showDiagnostics(diagnostics);
+  }
+
+  function setRunning(running: boolean, label?: string) {
+    if (running) {
+      runBtn.disabled = true;
+      runBtn.classList.add('opacity-60', 'cursor-wait');
+      runLabel.textContent = label ?? 'Running…';
+    } else {
+      runBtn.disabled = false;
+      runBtn.classList.remove('opacity-60', 'cursor-wait');
+      runLabel.textContent = 'Run';
+    }
+  }
+
+  function renderExtracted(env: any, meta: Record<string, any>) {
+    const keys = Object.keys(meta);
+    if (keys.length === 0) {
+      extractedBox.classList.add('hidden');
+      return;
+    }
+    extractedBox.classList.remove('hidden');
+    extractedList.innerHTML = '';
+    for (const name of keys) {
+      const m = meta[name];
+      const v = env.facts.get(name);
+
+      const li = document.createElement('li');
+      li.className = 'border-l-2 border-accent-soft/40 pl-3';
+
+      const header = document.createElement('div');
+      header.className = 'flex items-baseline gap-2 text-[12px]';
+      const nm = document.createElement('span');
+      nm.className = 'text-accent';
+      nm.textContent = name;
+      const meta2 = document.createElement('span');
+      meta2.className = 'text-mute';
+      const conf = m.confidence === null ? '?' : Math.round(m.confidence * 100) + '%';
+      meta2.textContent = `${m.model}  ·  conf ${conf}  ·  ${m.latencyMs}ms`;
+      header.append(nm, meta2);
+
+      const body = document.createElement('div');
+      body.className = 'mt-1 text-ink text-[13px]';
+      body.textContent = formatExtractedValue(v);
+
+      li.append(header, body);
+      extractedList.appendChild(li);
+    }
+  }
+
+  function formatExtractedValue(v: any): string {
+    if (!v) return 'null';
+    if (v.kind === 'object' && v.value) {
+      const entries = Object.entries(v.value).map(
+        ([k, vv]: [string, any]) => `${k}: ${fmtValue(vv)}`,
+      );
+      return '{ ' + entries.join(', ') + ' }';
+    }
+    if (v.kind === 'list' && Array.isArray(v.value)) {
+      return '[' + v.value.map(fmtValue).join(', ') + ']';
+    }
+    return fmtValue(v);
   }
 
   function renderVerdict(r: any, q: any) {

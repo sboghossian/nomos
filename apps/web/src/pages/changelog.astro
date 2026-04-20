@@ -1,0 +1,124 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+
+const entries = [
+  {
+    version: 'v0.0.2',
+    date: '2026-04-18',
+    title: 'LLM bridge lands. extract<T> runs end-to-end.',
+    highlights: [
+      'packages/llm: OpenRouter client with JSON-schema derived from Nomos TypeRef',
+      'CLI: --with-llm flag resolves extract<T> facts via OpenRouter; shows extracted values with confidence + model + latency',
+      'apps/api: tiny Node proxy holds the API key, rate-limits 20/hr per IP, deployed at nomos-api.dashable.dev',
+      'Playground: LLM toggle in the nav — the playground can now do extraction in-browser through the proxy',
+      'First full fixture: non_compete_llm.nomos extracts a Party + NonCompete from real French contract prose',
+    ],
+    commit: 'feat(llm): OpenRouter bridge — extract<T> runs end-to-end',
+  },
+  {
+    version: 'v0.0.1',
+    date: '2026-04-18',
+    title: 'Initial commit. Nomos exists.',
+    highlights: [
+      'packages/core: Chevrotain lexer + parser + typed AST',
+      'Name resolver with warnings for unresolved references',
+      'Value type + expression evaluator (binary ops, member access, is-predicates)',
+      'Rule engine with temporal validity (from / as of) and priority-based defeasibility',
+      'packages/cli: nomos run/parse/check with colored sectioned output',
+      'apps/web: landing page + playground at nomos.dashable.dev',
+      'Three French non-compete scenarios demonstrate enforceable / defeated / base-rule-failed outcomes',
+      'Public GitHub repo: github.com/sboghossian/nomos. Apache-2.0.',
+    ],
+    commit: 'chore: initial commit — v0.0.1',
+  },
+];
+
+const coming = [
+  'Specificity + recency tiebreakers (full defeasibility: lex specialis, lex posterior)',
+  'Typed CitationRef AST — replaces raw-string authorities',
+  'Eyecite integration — US citations resolve to real case law',
+  'Akoma Ntoso loader — import legislation, emit rule skeletons',
+  'Docassemble output adapter — Nomos program → guided legal interview',
+  'VS Code LSP — syntax, hover, diagnostics',
+  'Claude Skill: nomos-reason — for Lawvable\'s awesome-legal-skills',
+  'CUAD/MAUD benchmarks — extract<Clause> accuracy numbers in the README',
+  'Rule-pack marketplace — nomos install @nomos/fr-labour',
+];
+---
+
+<Layout title="Nomos · Changelog" description="Every slice of Nomos, shipped in public. A build log for an experimental programming language.">
+  <Nav current="/changelog" />
+
+  <section class="max-w-wide mx-auto px-6 md:px-10 py-16 md:py-24">
+    <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Changelog</span>
+    <h1 class="mt-4 max-w-[20ch]">Built in <span class="text-accent italic">public.</span></h1>
+    <p class="mt-8 text-xl md:text-2xl max-w-prose text-sub font-serif" style="font-weight:400; line-height:1.45;">
+      Every slice, shipped with a commit. No roadmap committees, no NDAs, no
+      release theater. Read the git log for the unfiltered version.
+    </p>
+    <p class="mt-6 text-sub text-[15px]">
+      <a href="https://github.com/sboghossian/nomos/commits/main" target="_blank">Full commit history →</a>
+    </p>
+  </section>
+
+  <!-- Entries -->
+  <section class="rule-top bg-white">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-16">
+      <div class="space-y-16">
+        {entries.map((e) => (
+          <div class="grid md:grid-cols-[220px_1fr] gap-10">
+            <div>
+              <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">{e.version}</span>
+              <p class="mt-1 font-mono text-[12px] text-mute">{e.date}</p>
+            </div>
+            <div class="max-w-prose">
+              <h2 class="font-serif text-2xl md:text-3xl" style="font-weight:500">{e.title}</h2>
+              <ul class="mt-5 space-y-2">
+                {e.highlights.map((h) => (
+                  <li class="flex gap-3 text-[15px]">
+                    <span class="text-accent shrink-0 mt-1">▸</span>
+                    <span class="text-sub">{h}</span>
+                  </li>
+                ))}
+              </ul>
+              <p class="mt-5 font-mono text-[12px] text-mute border-l-2 border-rule pl-3">
+                {e.commit}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Coming next -->
+  <section class="rule-top">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-16">
+      <div class="grid md:grid-cols-[220px_1fr] gap-10">
+        <div>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Next</span>
+          <h2 class="mt-1 font-serif">What's coming.</h2>
+        </div>
+        <div class="max-w-prose">
+          <p class="text-sub mb-6">
+            Rough order, subject to reality. Each slice gets committed as it
+            ships. Nothing here is promised — it's a stack of intentions.
+          </p>
+          <ul class="space-y-2 text-[15px]">
+            {coming.map((c) => (
+              <li class="flex gap-3">
+                <span class="text-mute shrink-0 mt-1">○</span>
+                <span class="text-sub">{c}</span>
+              </li>
+            ))}
+          </ul>
+          <p class="mt-8 text-[14px] text-mute">
+            See <a href="https://github.com/sboghossian/nomos/issues">open issues</a>
+            for the live version. Suggestions welcome.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
