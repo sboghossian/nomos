@@ -15,7 +15,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse, check, evaluate, envFromJson, prettyPrint } from "@nomos/core";
-import { bold, cyan, dim, red, yellow, gray } from "./tty.js";
+import { resolveFacts } from "@nomos/llm";
+import { bold, cyan, dim, green, red, yellow, gray } from "./tty.js";
 import { renderDiagnostics, renderResult } from "./render.js";
 
 const VERSION = "0.0.1";
@@ -34,7 +35,14 @@ function usage(): string {
     bold("Examples"),
     `  ${dim("$")} nomos run contract.nomos --input facts.json`,
     `  ${dim("$")} nomos run contract.nomos --as-of 2015-01-01`,
+    `  ${dim("$")} nomos run contract.nomos --with-llm --model claude-opus-4-7`,
     `  ${dim("$")} nomos parse contract.nomos`,
+    "",
+    bold("Flags"),
+    `  ${dim("--input   ")} path to JSON fact bindings (auto-detects sibling .input.json)`,
+    `  ${dim("--as-of   ")} override the query's as-of date (YYYY-MM-DD)`,
+    `  ${dim("--with-llm")} resolve extract<T> facts via OpenRouter (needs OPENROUTER_API_KEY)`,
+    `  ${dim("--model   ")} default model alias for extract<T> (e.g. claude-sonnet-4-5)`,
     "",
     dim("See nomos-lang.dev for language docs."),
   ].join("\n");
@@ -118,11 +126,13 @@ function runCheck(file: string): void {
   if (checked.diagnostics.some((d) => d.severity === "error")) process.exit(1);
 }
 
-function runRun(
+async function runRun(
   file: string,
   inputPath: string | undefined,
   asOf: string | undefined,
-): void {
+  withLlm: boolean,
+  model: string | undefined,
+): Promise<void> {
   const { src } = loadSource(file);
   const parsed = parse(src);
   if (parsed.lexErrors.length + parsed.parseErrors.length > 0) {
@@ -180,7 +190,62 @@ function runRun(
   for (const q of queries) {
     const effectiveAsOf =
       asOf ?? q.asOf ?? new Date().toISOString().slice(0, 10);
-    const env = envFromJson(inputs, effectiveAsOf);
+    let env = envFromJson(inputs, effectiveAsOf);
+
+    // ── LLM fact resolution ────────────────────────────────────────────
+    if (withLlm) {
+      const apiKey = process.env["OPENROUTER_API_KEY"];
+      if (!apiKey) {
+        console.error(
+          red("error: ") +
+            "--with-llm requires OPENROUTER_API_KEY in the environment",
+        );
+        process.exit(1);
+      }
+      console.error(dim("resolving extract<T> facts via OpenRouter..."));
+      const opts = {
+        apiKey,
+        appName: process.env["NOMOS_APP_NAME"] ?? "Nomos",
+        appUrl: process.env["NOMOS_APP_URL"] ?? "https://nomos.dashable.dev",
+        /** Extract's source identifier resolves against the input JSON bindings. */
+        resolveSource: (id: string): string => {
+          const v = inputs[id];
+          if (typeof v === "string") return v;
+          if (v && typeof v === "object") return JSON.stringify(v, null, 2);
+          return `<no binding for '${id}' in input JSON>`;
+        },
+        onFact: (
+          name: string,
+          m: {
+            model: string;
+            confidence: number | null;
+            latencyMs: number;
+            belowThreshold: boolean;
+          },
+        ) => {
+          const conf =
+            m.confidence === null ? "?" : (m.confidence * 100).toFixed(0) + "%";
+          const icon = m.belowThreshold ? yellow("⚠") : green("✓");
+          console.error(
+            `  ${icon} ${dim(name)}  ${gray(m.model)}  ${dim("conf")} ${conf}  ${dim("→")} ${m.latencyMs}ms`,
+          );
+        },
+      } as const;
+      const withModel = model ? { ...opts, defaultModel: model } : opts;
+      const resolved = await resolveFacts(program, env, withModel);
+      env = resolved.env;
+
+      // Show what the LLM actually extracted so users can audit.
+      console.error();
+      console.error(dim("─── EXTRACTED FACTS") + dim(" " + "─".repeat(42)));
+      for (const factName of Object.keys(resolved.facts)) {
+        const v = env.facts.get(factName);
+        const pretty = valueToString(v);
+        console.error(`  ${cyan(factName)} ${dim("=")} ${pretty}`);
+      }
+      console.error();
+    }
+
     const result = evaluate(program, q, env);
     const label =
       q.expression.kind === "IdentExpr" ? q.expression.name : "<query>";
@@ -197,7 +262,50 @@ function runRun(
 
 // ─── main ──────────────────────────────────────────────────────────────────
 
-const { cmd, positional, flags } = readArgs(process.argv.slice(2));
+const { cmd, positional, flags, boolFlags } = readArgs(process.argv.slice(2));
+
+// Load .env if present (lightweight, no dotenv dep).
+loadDotEnv();
+
+function valueToString(v: unknown): string {
+  if (v === undefined) return "undefined";
+  const inner = (x: unknown): string => {
+    if (!x || typeof x !== "object") return JSON.stringify(x);
+    const o = x as { kind?: string; value?: unknown };
+    if (o.kind === "bool") return String(o.value);
+    if (o.kind === "number") return String(o.value);
+    if (o.kind === "string") return JSON.stringify(o.value);
+    if (o.kind === "date") return String(o.value);
+    if (o.kind === "null") return "null";
+    if (o.kind === "list" && Array.isArray(o.value))
+      return "[" + o.value.map(inner).join(", ") + "]";
+    if (o.kind === "object" && o.value && typeof o.value === "object") {
+      const entries = Object.entries(o.value as Record<string, unknown>)
+        .map(([k, vv]) => `${k}: ${inner(vv)}`)
+        .join(", ");
+      return "{ " + entries + " }";
+    }
+    return JSON.stringify(x);
+  };
+  return inner(v);
+}
+
+function loadDotEnv(): void {
+  try {
+    const fs = readFileSync(resolve(".env"), "utf8");
+    for (const line of fs.split("\n")) {
+      const m = line.match(/^([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/i);
+      if (!m) continue;
+      const [, k, rawV] = m;
+      if (k && rawV !== undefined && !process.env[k]) {
+        const v = rawV.trim().replace(/^["']|["']$/g, "");
+        process.env[k] = v;
+      }
+    }
+  } catch {
+    // no .env — fine.
+  }
+}
 
 switch (cmd) {
   case "":
@@ -226,7 +334,16 @@ switch (cmd) {
 
   case "run":
     if (!positional[0]) fail("nomos run needs a file");
-    runRun(positional[0], flags.get("input"), flags.get("as-of"));
+    runRun(
+      positional[0],
+      flags.get("input"),
+      flags.get("as-of"),
+      boolFlags.has("with-llm"),
+      flags.get("model"),
+    ).catch((err: Error) => {
+      console.error(red("error: ") + err.message);
+      process.exit(1);
+    });
     break;
 
   default:

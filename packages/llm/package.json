@@ -1,11 +1,16 @@
 {
-  "name": "@nomos/cli",
+  "name": "@nomos/llm",
   "version": "0.0.1",
-  "description": "The Nomos command-line tool.",
+  "description": "LLM bridge runtime for Nomos — OpenRouter client, typed extraction, JSON-schema coercion.",
   "license": "Apache-2.0",
   "type": "module",
-  "bin": {
-    "nomos": "./dist/bin.js"
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "files": [
     "dist",
@@ -16,8 +21,7 @@
     "dev": "tsc -p tsconfig.json --watch"
   },
   "dependencies": {
-    "@nomos/core": "0.0.1",
-    "@nomos/llm": "0.0.1"
+    "@nomos/core": "0.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
