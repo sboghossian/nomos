@@ -20,12 +20,13 @@ import Nav from '../../components/Nav.astro';
     <hr class="my-16 border-rule" />
 
     <!-- Claim 1 -->
-    <section class="grid md:grid-cols-[220px_1fr] gap-10">
+    <section class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14">
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Claim 01</span>
-        <h2 class="mt-3 font-serif">Legal reasoning is already a computation.</h2>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">Claim 01</span>
       </div>
-      <div class="max-w-prose space-y-5">
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Legal reasoning is already a computation.</h2>
+        <div class="space-y-5">
         <p>
           Statutes define predicates. Facts are inputs. Precedent is a priority ordering.
           Reforms are temporal updates. Judges have been running this computation for
@@ -40,18 +41,20 @@ import Nav from '../../components/Nav.astro';
           economically. That's why rules-as-code never moved from academia to
           industry.
         </p>
+        </div>
       </div>
     </section>
 
     <hr class="my-16 border-rule" />
 
     <!-- Claim 2 -->
-    <section class="grid md:grid-cols-[220px_1fr] gap-10">
+    <section class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14">
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Claim 02</span>
-        <h2 class="mt-3 font-serif">LLMs changed what's possible. But they're the wrong center.</h2>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">Claim 02</span>
       </div>
-      <div class="max-w-prose space-y-5">
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">LLMs changed what's possible. But they're the wrong center.</h2>
+        <div class="space-y-5">
         <p>
           LLMs can read a contract and produce structured data. That changes the
           economics of rules-as-code overnight — the paralegal army is replaced by
@@ -70,18 +73,20 @@ import Nav from '../../components/Nav.astro';
           inside the language — a typed bridge from prose to structure, sitting at
           the edge, under the compiler's supervision.
         </blockquote>
+        </div>
       </div>
     </section>
 
     <hr class="my-16 border-rule" />
 
     <!-- Claim 3 -->
-    <section class="grid md:grid-cols-[220px_1fr] gap-10">
+    <section class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14">
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Claim 03</span>
-        <h2 class="mt-3 font-serif">Four first-class primitives nothing else has together.</h2>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">Claim 03</span>
       </div>
-      <div class="max-w-prose space-y-6">
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Four first-class primitives nothing else has together.</h2>
+        <div class="space-y-6">
         <div>
           <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">Primitive 1 — Typed LLM bridges</span>
           <p class="mt-2">
@@ -120,18 +125,20 @@ import Nav from '../../components/Nav.astro';
             tree back to statutes. No hallucinations, no vibes.
           </p>
         </div>
+        </div>
       </div>
     </section>
 
     <hr class="my-16 border-rule" />
 
     <!-- Claim 4 -->
-    <section class="grid md:grid-cols-[220px_1fr] gap-10">
+    <section class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14">
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Claim 04</span>
-        <h2 class="mt-3 font-serif">Not from scratch. A layer.</h2>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">Claim 04</span>
       </div>
-      <div class="max-w-prose space-y-5">
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Not from scratch. A layer.</h2>
+        <div class="space-y-5">
         <p>
           Building a legal DSL in 2026 without studying Catala (Inria), OpenFisca,
           Blawx, Kowalski, Logical English, and LegalRuleML would be arrogant and
@@ -148,22 +155,25 @@ import Nav from '../../components/Nav.astro';
           See <a href="/research/prior-art">/research/prior-art</a> for the full table
           of what we borrow and what we leave.
         </p>
+        </div>
       </div>
     </section>
 
     <hr class="my-16 border-rule" />
 
     <!-- What Nomos is not -->
-    <section class="grid md:grid-cols-[220px_1fr] gap-10">
+    <section class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14">
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Honest scope</span>
-        <h2 class="mt-3 font-serif">What Nomos is not.</h2>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">Scope</span>
       </div>
-      <div class="max-w-prose space-y-4 text-sub">
-        <p>— Nomos is not a law firm, a legal advice engine, or a replacement for counsel.</p>
-        <p>— Nomos is not a universal encoder of law. It encodes the rules <em>you</em> write. Garbage in, garbage out.</p>
-        <p>— Nomos is not production-ready. This is v0. Breaking changes expected.</p>
-        <p>— Nomos is not a company. It is a side project, built in public, Apache-2.0.</p>
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">What Nomos is not.</h2>
+        <div class="space-y-4 text-sub">
+          <p>— Nomos is not a law firm, a legal advice engine, or a replacement for counsel.</p>
+          <p>— Nomos is not a universal encoder of law. It encodes the rules <em>you</em> write. Garbage in, garbage out.</p>
+          <p>— Nomos is not production-ready. This is v0. Breaking changes expected.</p>
+          <p>— Nomos is not a company. It is a side project, built in public, Apache-2.0.</p>
+        </div>
       </div>
     </section>
 

@@ -101,12 +101,13 @@ const run = {
     <hr class="my-14 border-rule" />
 
     <!-- What this means -->
-    <section class="grid md:grid-cols-[220px_1fr] gap-10">
+    <section class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14">
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 02</span>
-        <h2 class="mt-3 font-serif">What this means.</h2>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 02</span>
       </div>
-      <div class="max-w-prose space-y-5">
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">What this means.</h2>
+        <div class="space-y-5">
         <p>
           <strong>Document Name</strong> is a 1.00/1.00 win. Field-name
           extraction is essentially solved by a good model with a clear
@@ -136,18 +137,20 @@ const run = {
           human-in-loop gate is the thing that makes over-confident
           outputs safe.
         </p>
+        </div>
       </div>
     </section>
 
     <hr class="my-14 border-rule" />
 
     <!-- Reproduce -->
-    <section class="grid md:grid-cols-[220px_1fr] gap-10">
+    <section class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14">
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 03</span>
-        <h2 class="mt-3 font-serif">Reproduce.</h2>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 03</span>
       </div>
-      <div class="max-w-prose space-y-4">
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Reproduce.</h2>
+        <div class="space-y-4">
         <p>Clone the repo, install, and run the harness:</p>
         <pre class="astro-code border border-rule bg-white"><code>{`git clone https://github.com/sboghossian/nomos
 cd nomos && npm install && npm run build
@@ -169,26 +172,29 @@ node bench/cuad/harness.mjs \\
           Results land in <code>bench/cuad/results/cuad-&lt;timestamp&gt;.json</code>.
           Raw per-item scores are included so anyone can audit our numbers.
         </p>
+        </div>
       </div>
     </section>
 
     <hr class="my-14 border-rule" />
 
     <!-- Roadmap -->
-    <section class="grid md:grid-cols-[220px_1fr] gap-10">
+    <section class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14">
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 04</span>
-        <h2 class="mt-3 font-serif">Next runs.</h2>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 04</span>
       </div>
-      <div class="max-w-prose space-y-3 text-[15px]">
-        <p>— <strong>Scale</strong>: 50 samples × 10 categories = 500 extractions for a stabler mean.</p>
-        <p>— <strong>Model comparison</strong>: Sonnet 4.5 vs Opus 4.7 vs GPT-5 vs Gemini 2.5 Pro on the same seed.</p>
-        <p>— <strong>Schema discipline</strong>: compare loose vs strict schemas on Effective Date to quantify the schema-design payoff.</p>
-        <p>— <strong>MAUD</strong>: run the same harness on M&amp;A questions (47k labels, 152 contracts).</p>
-        <p>— <strong>ACORD</strong>: evaluate retrieval accuracy on 126k query-clause pairs.</p>
-        <p class="mt-6 text-[13px] text-mute">
-          All results here get posted verbatim — wins and losses. Nomos's credibility rides on the graph, not the hype.
-        </p>
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Next runs.</h2>
+        <div class="space-y-3 text-[15px]">
+          <p>— <strong>Scale</strong>: 50 samples × 10 categories = 500 extractions for a stabler mean.</p>
+          <p>— <strong>Model comparison</strong>: Sonnet 4.5 vs Opus 4.7 vs GPT-5 vs Gemini 2.5 Pro on the same seed.</p>
+          <p>— <strong>Schema discipline</strong>: compare loose vs strict schemas on Effective Date to quantify the schema-design payoff.</p>
+          <p>— <strong>MAUD</strong>: run the same harness on M&amp;A questions (47k labels, 152 contracts).</p>
+          <p>— <strong>ACORD</strong>: evaluate retrieval accuracy on 126k query-clause pairs.</p>
+          <p class="mt-6 text-[13px] text-mute">
+            All results here get posted verbatim — wins and losses. Nomos's credibility rides on the graph, not the hype.
+          </p>
+        </div>
       </div>
     </section>
   </article>

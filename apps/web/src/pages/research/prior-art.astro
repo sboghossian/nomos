@@ -221,12 +221,13 @@ const reusableStack = [
     <hr class="my-16 border-rule" />
 
     <!-- Credit discipline -->
-    <section class="grid md:grid-cols-[220px_1fr] gap-10">
+    <section class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14">
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 03</span>
-        <h2 class="mt-3 font-serif">Credit discipline.</h2>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 03</span>
       </div>
-      <div class="max-w-prose space-y-4 text-sub">
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Credit discipline.</h2>
+        <div class="space-y-4 text-sub">
         <p>
           Every paper or project above is cited in our README, our research pages,
           and — eventually — in any academic write-up. "I didn't know about them"
@@ -237,6 +238,7 @@ const reusableStack = [
           a library, it's a declared dependency with the upstream license. If you
           see something unattributed, <a href="https://github.com/sboghossian/nomos/issues/new">open an issue</a>.
         </p>
+        </div>
       </div>
     </section>
   </article>
