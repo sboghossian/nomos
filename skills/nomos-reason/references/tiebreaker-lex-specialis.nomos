@@ -1,0 +1,25 @@
+// Reference example — lex specialis tiebreak.
+//
+// Two rules at identical priority conflict. Neither declares higher
+// priority than the other. Nomos resolves by specificity: the more
+// constrained rule wins, and the tiebreaker field in the EvalResult
+// explains the decision.
+
+type Employee {
+  role: String
+  seniority_years: Float
+  is_executive: Boolean
+}
+
+// General rule — 1 require clause, specificity = 1
+rule two_weeks_notice @ US from 2020-01-01 {
+  requires employee.seniority_years >= 0
+}
+
+// Specific rule — 1 require + 1 when + 1 defeats, specificity = 4
+rule executive_thirty_days @ US from 2020-01-01 defeats two_weeks_notice when employee.is_executive {
+  requires employee.seniority_years >= 5
+  authority: corporate_governance_policy.section("7.2")
+}
+
+query two_weeks_notice as of 2026-04-18
