@@ -102,7 +102,9 @@ describe("temporal validity", () => {
     const r = evaluate(ast, query, env);
 
     expect(r.value).toEqual({ kind: "bool", value: false });
-    const baseTrace = r.traces.find((t) => t.rule === "non_compete_enforceable")!;
+    const baseTrace = r.traces.find(
+      (t) => t.rule === "non_compete_enforceable",
+    )!;
     expect(baseTrace.skippedReason).toMatch(/valid only from/);
   });
 });

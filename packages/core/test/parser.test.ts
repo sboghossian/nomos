@@ -116,7 +116,9 @@ describe("rules", () => {
 
 describe("authorities", () => {
   it("classifies publisher.art(...) as article", () => {
-    const ast = mustParse(`rule r { authority: code_du_travail.art("L1121-1") }`);
+    const ast = mustParse(
+      `rule r { authority: code_du_travail.art("L1121-1") }`,
+    );
     const a = (ast.declarations[0] as any).authorities[0];
     expect(a.source).toBe("code_du_travail");
     expect(a.citationKind).toBe("article");
@@ -125,7 +127,9 @@ describe("authorities", () => {
   });
 
   it("classifies publisher(DATE, ID) as case", () => {
-    const ast = mustParse(`rule r { authority: cass_soc(2002-07-10, "00-45135") }`);
+    const ast = mustParse(
+      `rule r { authority: cass_soc(2002-07-10, "00-45135") }`,
+    );
     const a = (ast.declarations[0] as any).authorities[0];
     expect(a.source).toBe("cass_soc");
     expect(a.citationKind).toBe("case");

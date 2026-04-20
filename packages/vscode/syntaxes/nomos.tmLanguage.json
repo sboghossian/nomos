@@ -1,0 +1,87 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Nomos",
+  "scopeName": "source.nomos",
+  "fileTypes": ["nomos"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#keywords" },
+    { "include": "#types" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#dates" },
+    { "include": "#annotations" },
+    { "include": "#punctuation" },
+    { "include": "#identifiers" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        { "name": "comment.line.double-slash.nomos", "match": "//.*$" },
+        {
+          "name": "comment.block.nomos",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.nomos",
+          "match": "\\b(rule|fact|query|type|when|requires|authority|from|as|of|priority|defeats|using|verified_by|if|extract|llm|human|is)\\b"
+        },
+        {
+          "name": "constant.language.boolean.nomos",
+          "match": "\\b(true|false)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "support.type.primitive.nomos",
+          "match": "\\b(String|Float|Int|Integer|Bool|Boolean|Date|Duration|Geography|List|Array)\\b"
+        },
+        {
+          "name": "entity.name.type.nomos",
+          "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.nomos",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        { "name": "constant.character.escape.nomos", "match": "\\\\." }
+      ]
+    },
+    "dates": {
+      "name": "constant.numeric.date.nomos",
+      "match": "\\b\\d{4}-\\d{2}-\\d{2}\\b"
+    },
+    "numbers": {
+      "name": "constant.numeric.nomos",
+      "match": "\\b\\d+(\\.\\d+)?\\b"
+    },
+    "annotations": {
+      "name": "entity.name.tag.nomos",
+      "match": "@\\s*[A-Za-z_][A-Za-z0-9_]*"
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "keyword.operator.logical.nomos",
+          "match": "∧|∨|&&|\\|\\||==|<=|>=|<|>|="
+        },
+        { "name": "punctuation.separator.nomos", "match": "[:,.]" },
+        { "name": "punctuation.bracket.nomos", "match": "[\\[\\](){}]" }
+      ]
+    },
+    "identifiers": {
+      "name": "variable.other.nomos",
+      "match": "\\b[a-z_][a-zA-Z0-9_]*\\b"
+    }
+  }
+}
