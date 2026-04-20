@@ -1,0 +1,20 @@
+{
+  "name": "nomos",
+  "private": true,
+  "version": "0.0.1",
+  "description": "A programming language for legal reasoning.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "web": "npm run dev -w @nomos/web",
+    "test": "npm run test -w @nomos/core",
+    "build": "npm run build -w @nomos/core && npm run build -w @nomos/cli"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

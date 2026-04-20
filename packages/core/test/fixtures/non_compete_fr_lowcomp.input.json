@@ -1,0 +1,9 @@
+{
+  "parties": [{ "name": "Bob", "role": "employee" }],
+  "party": { "name": "Bob", "role": "employee" },
+  "clause": {
+    "duration": 18,
+    "scope": { "reasonable": true },
+    "compensation_pct": 0.12
+  }
+}

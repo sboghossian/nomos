@@ -1,0 +1,417 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const nomosExample = `// A French non-compete clause, reasoned about as of 2026-04-18.
+
+type Party {
+  name: String
+  role: "seller" | "buyer" | "employee" | "employer" | "consumer"
+}
+
+type NonCompete {
+  duration: Duration
+  scope: Geography
+  compensation_pct: Float
+}
+
+rule non_compete_enforceable @ FR from 2016-08-10 {
+  requires clause.duration <= 24.months
+  requires clause.scope is reasonable
+  requires clause.compensation_pct >= 0.30
+  authority: code_du_travail.art(L1121-1)
+           ∧ cass_soc(2002-07-10, "00-45135")
+}
+
+rule consumer_protection_override @ FR priority 100
+  defeats non_compete_enforceable
+  when party.role == "consumer" {
+  authority: code_conso.art(L212-1)
+}
+
+// LLM bridge — typed, verified, auditable.
+fact parties: List<Party> = extract<Party>(contract.pdf)
+  using llm(claude-opus-4-7)
+  verified_by human if confidence < 0.95
+
+fact clause: NonCompete = extract<NonCompete>(contract.pdf, section: "non-compete")
+  using llm(claude-opus-4-7)
+
+query non_compete_enforceable(clause, parties[0]) as of 2026-04-18
+`;
+
+const priorArt = [
+  { name: 'Catala', org: 'Inria', contribution: 'Default logic for legislation, lawyer-readable syntax' },
+  { name: 'OpenFisca', org: 'France', contribution: 'Proof that rules-as-code runs at government scale' },
+  { name: 'Blawx', org: 'Lexpedite', contribution: 'Explanation generation over s(CASP)' },
+  { name: 'Logical English', org: 'Kowalski / Imperial', contribution: 'Controlled natural language frontend' },
+  { name: 'Kowalski et al. (1981)', org: 'British Nationality Act', contribution: 'The foundational encoding — CodeX Prize 2021' },
+  { name: 'LegalRuleML', org: 'OASIS', contribution: 'Interop standard for legal rules' },
+];
+
+const stack = [
+  { name: 'Eyecite', role: 'US citation resolver', href: 'https://github.com/freelawproject/eyecite' },
+  { name: 'Concerto', role: 'Type system base', href: 'https://github.com/accordproject/concerto' },
+  { name: 'Akoma Ntoso', role: 'Legislation import', href: 'http://www.akomantoso.org/' },
+  { name: 'CUAD / MAUD / ACORD', role: 'Extraction benchmarks', href: 'https://www.atticusprojectai.org/' },
+  { name: 'Restate', role: 'Durable execution', href: 'https://restate.dev' },
+  { name: 'Docassemble', role: 'Interview export', href: 'https://docassemble.org/' },
+];
+---
+
+<Layout>
+  <!-- ─────────── Top rule + nav ─────────── -->
+  <header class="rule-bottom">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-5 flex items-center justify-between">
+      <a href="/" class="no-underline flex items-baseline gap-2">
+        <span class="font-serif text-2xl text-accent" style="font-weight:500">ν</span>
+        <span class="font-serif text-xl tracking-tight" style="font-weight:500">Nomos</span>
+      </a>
+      <nav class="flex items-center gap-6 text-[13px] text-sub">
+        <a href="#thesis" class="no-underline hover:text-ink">Thesis</a>
+        <a href="#language" class="no-underline hover:text-ink">Language</a>
+        <a href="#pillars" class="no-underline hover:text-ink">Why Nomos</a>
+        <a href="#stack" class="no-underline hover:text-ink">Stack</a>
+        <a href="#prior" class="no-underline hover:text-ink">Prior art</a>
+        <a
+          href="https://github.com/nomos-lang/nomos"
+          class="chip chip-accent no-underline">
+          GitHub
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ─────────── Hero ─────────── -->
+  <section class="max-w-wide mx-auto px-6 md:px-10 pt-20 md:pt-28 pb-24 md:pb-32">
+    <div class="flex items-center gap-3 mb-8">
+      <span class="chip">v0.0.1 · In development</span>
+      <span class="chip">Apache-2.0</span>
+      <span class="chip">TypeScript</span>
+    </div>
+
+    <h1 class="max-w-[22ch]">
+      A programming language for
+      <em class="italic text-accent" style="font-feature-settings:'ss01'">legal reasoning.</em>
+    </h1>
+
+    <p class="mt-8 text-xl md:text-2xl max-w-prose text-sub font-serif" style="font-weight:400; line-height:1.45;">
+      Rules carry jurisdiction, date, and authority. LLMs bridge prose to typed facts at the edges.
+      A defeasibility engine resolves conflicts the way judges do. Every output is a proof tree
+      back to statutes and cases.
+    </p>
+
+    <div class="mt-12 flex flex-wrap gap-3 items-center">
+      <a
+        href="https://github.com/nomos-lang/nomos"
+        class="inline-block no-underline bg-ink text-cream px-5 py-3 text-[14px] font-medium hover:bg-accent transition-colors link-arrow">
+        Read the source
+      </a>
+      <a
+        href="#language"
+        class="inline-block no-underline border border-ink px-5 py-3 text-[14px] font-medium hover:bg-ink hover:text-cream transition-colors">
+        See the language
+      </a>
+      <span class="text-[13px] text-mute ml-2 hidden md:inline">
+        <span class="kbd">npm create nomos@latest</span>
+        <span class="opacity-50">· aspirational, week 6</span>
+      </span>
+    </div>
+
+    <!-- Etymology / definition block -->
+    <div class="mt-20 md:mt-28 border-t border-rule pt-8 grid md:grid-cols-[auto_1fr] gap-x-10 gap-y-3 max-w-3xl">
+      <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute pt-1">Noun · Greek</span>
+      <div>
+        <p class="font-serif text-ink text-xl leading-snug" style="font-weight:500">
+          <span class="text-accent">νόμος</span> <span class="text-mute font-sans text-sm">/ˈnomos/</span>
+        </p>
+        <p class="mt-2 text-sub">
+          Law, custom, rule. The binding norm a community recognizes as authoritative —
+          weighted, contextual, contested. Used by Plato, Aristotle, and H.&thinsp;L.&thinsp;A.&thinsp;Hart to describe
+          what a legal system actually <em>is</em>, before anyone wrote it down.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── Thesis ─────────── -->
+  <section id="thesis" class="rule-top bg-white">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28 grid md:grid-cols-[220px_1fr] gap-10">
+      <div>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 01 — Thesis</span>
+        <h2 class="mt-4 font-serif">The premise.</h2>
+      </div>
+      <div class="max-w-prose space-y-6">
+        <p class="text-ink text-lg font-serif leading-[1.55]" style="font-weight:400">
+          Legal reasoning is already a computation. Statutes define predicates.
+          Facts are inputs. Precedent is a priority ordering. Reforms are temporal updates.
+          Judges have been running this computation for two thousand years.
+          Logic programming knew it in the 1970s and couldn't finish the job because
+          the world kept speaking in prose.
+        </p>
+        <p>
+          LLMs changed that. Nomos puts the LLM at the edge — a typed bridge from prose
+          to structured facts — and keeps the interior deterministic, defeasible, and
+          auditable. You get the rigor of Catala, the pragmatism of OpenFisca, and the
+          agent-native execution the rules-as-code field has always been missing.
+        </p>
+        <p>
+          Not invented from scratch. Built as a layer on top of fifty years of work —
+          Eyecite for citations, Concerto for types, Akoma Ntoso for legislation,
+          Atticus for evaluation. Roughly fifteen percent new code, eighty-five percent
+          standing on the shoulders of giants.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── Language ─────────── -->
+  <section id="language" class="rule-top">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
+      <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-10">
+        <div>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 02 — Language</span>
+          <h2 class="mt-4 font-serif">A sketch.</h2>
+        </div>
+        <div class="max-w-prose">
+          <p>
+            A French non-compete clause, evaluated under the 2016 labour reform —
+            with a consumer-protection rule that <em>defeats</em> enforceability
+            when the employee is acting as a consumer. The LLM extracts
+            structured facts from the PDF; the rule engine does the rest.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 border border-rule bg-white">
+        <div class="flex items-center justify-between border-b border-rule px-5 py-2.5">
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+            contract.nomos
+          </span>
+          <span class="font-mono text-[11px] text-accent">● ready</span>
+        </div>
+        <pre class="astro-code m-0 border-0"><code set:html={nomosExample.replace(/</g, '&lt;').replace(/>/g, '&gt;')}></code></pre>
+      </div>
+
+      <div class="mt-8 grid md:grid-cols-2 gap-6 max-w-prose">
+        <div>
+          <h4 class="font-serif text-lg mb-1.5" style="font-weight:500">Output — the value.</h4>
+          <p class="text-sub text-[15px]">
+            <code class="text-accent">false</code>. The clause is not enforceable;
+            the consumer-protection rule defeats the labour-law rule by priority.
+          </p>
+        </div>
+        <div>
+          <h4 class="font-serif text-lg mb-1.5" style="font-weight:500">Output — the proof.</h4>
+          <p class="text-sub text-[15px]">
+            A tree: <code>L212-1</code> defeated <code>L1121-1</code>, which would have been satisfied
+            by <code>Cass. soc. 2002-07-10 · no. 00-45135</code>. Every fact traced to its source.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── Pillars ─────────── -->
+  <section id="pillars" class="rule-top bg-white">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
+      <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-16">
+        <div>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 03 — Pillars</span>
+          <h2 class="mt-4 font-serif">Four things nothing else has together.</h2>
+        </div>
+        <div class="max-w-prose">
+          <p>
+            Catala has default logic. OpenFisca has production adoption.
+            LangGraph has agents. None have all four below.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-x-12 gap-y-14">
+        <!-- Pillar 1 -->
+        <div>
+          <div class="flex items-baseline gap-3 mb-3">
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">Pillar 1</span>
+          </div>
+          <h3 class="font-serif mb-3" style="font-weight:500">Typed LLM bridges.</h3>
+          <p>
+            <code>extract&lt;T&gt; using llm(...) verified_by human if confidence &lt; X</code> is a
+            language primitive, not library plumbing. The model returns a typed value, or the
+            compiler rejects it. Low-confidence extractions route to a human automatically.
+          </p>
+        </div>
+
+        <!-- Pillar 2 -->
+        <div>
+          <div class="flex items-baseline gap-3 mb-3">
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">Pillar 2</span>
+          </div>
+          <h3 class="font-serif mb-3" style="font-weight:500">Time and jurisdiction, typed.</h3>
+          <p>
+            Rules declare <code>@ FR from 2016-08-10</code>. Queries run
+            <code>as of 2015-01-01</code>. The compiler refuses to apply a
+            post-reform rule to a pre-reform fact, or a French rule to a Lebanese party.
+          </p>
+        </div>
+
+        <!-- Pillar 3 -->
+        <div>
+          <div class="flex items-baseline gap-3 mb-3">
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">Pillar 3</span>
+          </div>
+          <h3 class="font-serif mb-3" style="font-weight:500">Defeasibility, by design.</h3>
+          <p>
+            Legal rules contradict each other. Specific beats general, later beats earlier,
+            higher court beats lower. Nomos resolves conflicts by priority, specificity, and
+            recency — and tells you which rule defeated which, and why.
+          </p>
+        </div>
+
+        <!-- Pillar 4 -->
+        <div>
+          <div class="flex items-baseline gap-3 mb-3">
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">Pillar 4</span>
+          </div>
+          <h3 class="font-serif mb-3" style="font-weight:500">Provenance, always.</h3>
+          <p>
+            Every value carries the authorities, facts, and rules that produced it.
+            Ask <em>why</em> and you get a proof tree back to statute articles and case
+            numbers — not a vibe, not a hallucination. Regulated industries have always
+            needed this. Now they can have it.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── Stack ─────────── -->
+  <section id="stack" class="rule-top">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
+      <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-12">
+        <div>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 04 — Stack</span>
+          <h2 class="mt-4 font-serif">A thin layer.</h2>
+        </div>
+        <div class="max-w-prose">
+          <p>
+            Nomos is roughly fifteen percent new code. The rest is permissively-licensed
+            open source that has already been battle-tested at scale. We reuse, credit,
+            and extend — never rewrite what works.
+          </p>
+        </div>
+      </div>
+
+      <div class="border-t border-rule">
+        {stack.map((s) => (
+          <a
+            href={s.href}
+            class="block border-b border-rule py-5 px-2 hover:bg-accent-bg transition-colors no-underline group">
+            <div class="grid md:grid-cols-[1fr_2fr_auto] gap-4 items-baseline">
+              <span class="font-serif text-lg text-ink" style="font-weight:500">{s.name}</span>
+              <span class="text-sub text-[15px]">{s.role}</span>
+              <span class="font-mono text-[11px] text-mute group-hover:text-accent">
+                {new URL(s.href).hostname.replace(/^www\./, '')} ↗
+              </span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── Prior art ─────────── -->
+  <section id="prior" class="rule-top bg-white">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
+      <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-12">
+        <div>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 05 — Prior art</span>
+          <h2 class="mt-4 font-serif">Standing on shoulders.</h2>
+        </div>
+        <div class="max-w-prose">
+          <p>
+            The rules-as-code tradition is fifty years old. Nomos is not the first attempt.
+            It is an attempt to combine the best of each into something a developer in 2026
+            would actually use.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-x-12 gap-y-8">
+        {priorArt.map((p) => (
+          <div class="border-l-2 border-accent-soft/40 pl-5 py-1">
+            <div class="flex items-baseline gap-3 mb-1.5">
+              <span class="font-serif text-lg" style="font-weight:500">{p.name}</span>
+              <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">{p.org}</span>
+            </div>
+            <p class="text-sub text-[15px]">{p.contribution}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── Closing call ─────────── -->
+  <section class="rule-top">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-24 md:py-32 text-center">
+      <h2 class="font-serif text-4xl md:text-5xl max-w-[28ch] mx-auto" style="font-weight:500">
+        Code the law.
+        <span class="text-accent italic">Audit the reasoning.</span>
+      </h2>
+      <p class="mt-6 max-w-prose mx-auto">
+        A side project, shipped in the open. Six weekends to v0.1. No company,
+        no roadmap committee — just a language, a compiler, and a web playground.
+      </p>
+
+      <div class="mt-10 flex flex-wrap gap-3 justify-center">
+        <a
+          href="https://github.com/nomos-lang/nomos"
+          class="inline-block no-underline bg-ink text-cream px-5 py-3 text-[14px] font-medium hover:bg-accent transition-colors link-arrow">
+          Star on GitHub
+        </a>
+        <a
+          href="#"
+          class="inline-block no-underline border border-ink px-5 py-3 text-[14px] font-medium hover:bg-ink hover:text-cream transition-colors">
+          Join Discord
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── Footer ─────────── -->
+  <footer class="rule-top bg-white">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-10 grid md:grid-cols-3 gap-8 text-[13px]">
+      <div>
+        <div class="flex items-baseline gap-2 mb-3">
+          <span class="font-serif text-lg text-accent" style="font-weight:500">ν</span>
+          <span class="font-serif text-lg" style="font-weight:500">Nomos</span>
+        </div>
+        <p class="text-mute max-w-[40ch]">
+          A programming language for legal reasoning. Apache-2.0.
+          Not affiliated with any law firm, vendor, or bar association.
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute mb-1">Project</span>
+        <a href="https://github.com/nomos-lang/nomos" class="no-underline text-sub hover:text-ink">GitHub</a>
+        <a href="#" class="no-underline text-sub hover:text-ink">Docs</a>
+        <a href="#" class="no-underline text-sub hover:text-ink">Playground</a>
+        <a href="#" class="no-underline text-sub hover:text-ink">Changelog</a>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute mb-1">Credit where due</span>
+        <a href="https://catala-lang.org/" class="no-underline text-sub hover:text-ink">Catala — Inria</a>
+        <a href="https://openfisca.org/" class="no-underline text-sub hover:text-ink">OpenFisca</a>
+        <a href="https://free.law/" class="no-underline text-sub hover:text-ink">Free Law Project</a>
+        <a href="https://www.atticusprojectai.org/" class="no-underline text-sub hover:text-ink">Atticus Project</a>
+      </div>
+    </div>
+    <div class="border-t border-rule">
+      <div class="max-w-wide mx-auto px-6 md:px-10 py-5 flex items-center justify-between text-[12px] text-mute">
+        <span>© 2026 · A side project by Stephane Boghossian.</span>
+        <span class="font-mono">νόμος · nómos · nomos</span>
+      </div>
+    </div>
+  </footer>
+</Layout>

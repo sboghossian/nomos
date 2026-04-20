@@ -1,0 +1,457 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const defaultSource = `// A French non-compete clause, reasoned about as of 2026-04-18.
+
+type Party {
+  name: String
+  role: "seller" | "buyer" | "employee" | "employer" | "consumer"
+}
+
+type NonCompete {
+  duration: Duration
+  scope: Geography
+  compensation_pct: Float
+}
+
+rule non_compete_enforceable @ FR from 2016-08-10 {
+  requires clause.duration <= 24
+  requires clause.scope is reasonable
+  requires clause.compensation_pct >= 0.30
+  authority: code_du_travail.art("L1121-1")
+  authority: cass_soc(2002-07-10, "00-45135")
+}
+
+rule consumer_protection_override @ FR priority 100 defeats non_compete_enforceable when party.role == "consumer" {
+  authority: code_conso.art("L212-1")
+}
+
+fact parties: List<Party> = extract<Party>(contract) using llm("claude-opus-4-7") verified_by human if confidence < 0.95
+
+fact clause: NonCompete = extract<NonCompete>(contract, section: "non-compete") using llm("claude-opus-4-7")
+
+query non_compete_enforceable as of 2026-04-18
+`;
+
+const scenarios = [
+  {
+    id: 'fair',
+    label: 'Employee · fair terms',
+    inputs: {
+      party: { name: 'Alice Dupont', role: 'employee' },
+      parties: [{ name: 'Alice Dupont', role: 'employee' }],
+      clause: { duration: 18, scope: { reasonable: true, region: 'Île-de-France' }, compensation_pct: 0.35 },
+    },
+  },
+  {
+    id: 'consumer',
+    label: 'Consumer role · defeater fires',
+    inputs: {
+      party: { name: 'Alice', role: 'consumer' },
+      parties: [{ name: 'Alice', role: 'consumer' }],
+      clause: { duration: 18, scope: { reasonable: true }, compensation_pct: 0.35 },
+    },
+  },
+  {
+    id: 'underpaid',
+    label: 'Underpaid (12%) · base rule fails',
+    inputs: {
+      party: { name: 'Bob', role: 'employee' },
+      parties: [{ name: 'Bob', role: 'employee' }],
+      clause: { duration: 18, scope: { reasonable: true }, compensation_pct: 0.12 },
+    },
+  },
+];
+---
+
+<Layout title="Nomos · Playground" description="An interactive playground for the Nomos legal-reasoning language. Parse, check, and evaluate Nomos programs in your browser.">
+  <!-- ─────────── Top rule + nav ─────────── -->
+  <header class="rule-bottom sticky top-0 bg-cream/95 backdrop-blur z-20">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-4 flex items-center justify-between">
+      <a href="/" class="no-underline flex items-baseline gap-2">
+        <span class="font-serif text-2xl text-accent" style="font-weight:500">ν</span>
+        <span class="font-serif text-xl tracking-tight" style="font-weight:500">Nomos</span>
+        <span class="chip ml-3">Playground</span>
+      </a>
+      <nav class="flex items-center gap-4 text-[13px] text-sub">
+        <a href="/" class="no-underline hover:text-ink">Home</a>
+        <span class="font-mono text-[11px] text-mute">v0.0.1</span>
+        <button
+          id="run-btn"
+          class="no-underline bg-ink text-cream px-4 py-2 text-[13px] font-medium hover:bg-accent transition-colors inline-flex items-center gap-2">
+          <span>Run</span>
+          <span class="kbd bg-accent-soft/30 text-cream border-cream/20 text-[10px]">⌘↵</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ─────────── Scenario selector ─────────── -->
+  <section class="rule-bottom">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-4 flex items-center gap-3 flex-wrap">
+      <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Scenarios</span>
+      {scenarios.map((s, i) => (
+        <button
+          data-scenario={s.id}
+          data-inputs={JSON.stringify(s.inputs)}
+          class={`scenario-btn chip hover:bg-accent-bg hover:border-accent-soft/50 transition-colors ${i === 0 ? 'chip-accent' : ''}`}>
+          {s.label}
+        </button>
+      ))}
+      <span class="ml-auto font-mono text-[11px] text-mute">Click to load · edit freely</span>
+    </div>
+  </section>
+
+  <!-- ─────────── Editor grid ─────────── -->
+  <section>
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-6 grid lg:grid-cols-[2fr_1fr] gap-6">
+      <!-- Source -->
+      <div class="border border-rule bg-white flex flex-col min-h-[420px]">
+        <div class="flex items-center justify-between border-b border-rule px-4 py-2">
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">contract.nomos</span>
+          <span id="parse-status" class="font-mono text-[11px] text-accent">● parsing…</span>
+        </div>
+        <textarea
+          id="source"
+          spellcheck="false"
+          class="flex-1 p-4 font-mono text-[13px] leading-relaxed outline-none resize-none bg-white text-ink"
+          style="tab-size: 2;">{defaultSource}</textarea>
+      </div>
+
+      <!-- Input JSON -->
+      <div class="border border-rule bg-white flex flex-col min-h-[420px]">
+        <div class="flex items-center justify-between border-b border-rule px-4 py-2">
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">facts.json</span>
+          <span id="json-status" class="font-mono text-[11px] text-mute">ready</span>
+        </div>
+        <textarea
+          id="inputs"
+          spellcheck="false"
+          class="flex-1 p-4 font-mono text-[13px] leading-relaxed outline-none resize-none bg-white text-ink"
+          style="tab-size: 2;"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── Verdict + proof ─────────── -->
+  <section class="rule-top bg-white">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-10">
+      <div class="grid lg:grid-cols-[1fr_1.4fr] gap-10">
+        <!-- Verdict card -->
+        <div>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Verdict</span>
+          <div id="verdict" class="mt-3 font-serif text-5xl md:text-6xl" style="font-weight:500">—</div>
+          <div class="mt-3 space-y-1.5 text-[15px]">
+            <div><span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">winning rule</span> <span id="winning" class="ml-2 font-mono text-accent">—</span></div>
+            <div><span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">defeated</span>     <span id="defeated" class="ml-2 font-mono text-yellow-700">—</span></div>
+            <div><span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">as of</span>        <span id="asof" class="ml-2 font-mono">—</span></div>
+          </div>
+
+          <div class="mt-6">
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Authorities</span>
+            <ul id="authorities" class="mt-2 space-y-1.5 text-[14px]"></ul>
+          </div>
+        </div>
+
+        <!-- Proof tree -->
+        <div>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Proof tree</span>
+          <div id="proof" class="mt-3 space-y-5"></div>
+
+          <div id="diagnostics" class="mt-8 hidden">
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Diagnostics</span>
+            <ul id="diag-list" class="mt-2 space-y-1 text-[13px] font-mono"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="rule-top">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-8 flex items-center justify-between text-[12px] text-mute">
+      <span>νόμος · running entirely in your browser. No data leaves this page.</span>
+      <a href="https://github.com/nomos-lang/nomos" class="no-underline hover:text-ink">GitHub ↗</a>
+    </div>
+  </footer>
+</Layout>
+
+<!-- ─────────── Runtime ─────────── -->
+<script>
+  import { parse, check, evaluate, envFromJson } from '@nomos/core';
+
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
+    document.getElementById(id) as T;
+
+  const srcEl = $<HTMLTextAreaElement>('source');
+  const inputsEl = $<HTMLTextAreaElement>('inputs');
+  const parseStatus = $('parse-status');
+  const jsonStatus = $('json-status');
+  const runBtn = $<HTMLButtonElement>('run-btn');
+
+  const verdictEl = $('verdict');
+  const winningEl = $('winning');
+  const defeatedEl = $('defeated');
+  const asofEl = $('asof');
+  const authoritiesEl = $('authorities');
+  const proofEl = $('proof');
+  const diagBox = $('diagnostics');
+  const diagList = $('diag-list');
+
+  // ─── Scenarios ──────────────────────────────────────────────────────────
+  const scenarioBtns = document.querySelectorAll<HTMLButtonElement>('.scenario-btn');
+  scenarioBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const inputs = btn.dataset.inputs;
+      if (!inputs) return;
+      inputsEl.value = JSON.stringify(JSON.parse(inputs), null, 2);
+      scenarioBtns.forEach((b) => b.classList.remove('chip-accent'));
+      btn.classList.add('chip-accent');
+      runAll();
+    });
+  });
+  // Default scenario
+  const firstBtn = scenarioBtns[0];
+  if (firstBtn && firstBtn.dataset.inputs) {
+    inputsEl.value = JSON.stringify(JSON.parse(firstBtn.dataset.inputs), null, 2);
+  }
+
+  // ─── Parse on typing (debounced) ────────────────────────────────────────
+  let parseTimer: number | undefined;
+  srcEl.addEventListener('input', () => {
+    window.clearTimeout(parseTimer);
+    parseTimer = window.setTimeout(() => parseOnly(), 250);
+  });
+  inputsEl.addEventListener('input', () => {
+    try {
+      JSON.parse(inputsEl.value);
+      jsonStatus.textContent = 'valid';
+      jsonStatus.className = 'font-mono text-[11px] text-accent';
+    } catch (e) {
+      jsonStatus.textContent = 'invalid JSON';
+      jsonStatus.className = 'font-mono text-[11px] text-red-600';
+    }
+  });
+
+  // ─── Keyboard: cmd/ctrl + enter runs ────────────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      runAll();
+    }
+  });
+  runBtn.addEventListener('click', () => runAll());
+
+  // ─── Core functions ─────────────────────────────────────────────────────
+
+  function parseOnly() {
+    const src = srcEl.value;
+    const parsed = parse(src);
+    const totalErrs = parsed.lexErrors.length + parsed.parseErrors.length;
+    if (totalErrs === 0) {
+      parseStatus.textContent = '● parsed';
+      parseStatus.className = 'font-mono text-[11px] text-accent';
+    } else {
+      parseStatus.textContent = `● ${totalErrs} error${totalErrs > 1 ? 's' : ''}`;
+      parseStatus.className = 'font-mono text-[11px] text-red-600';
+    }
+    return parsed;
+  }
+
+  function runAll() {
+    const parsed = parseOnly();
+    if (!parsed.ast) {
+      showDiagnostics(
+        [...parsed.lexErrors, ...parsed.parseErrors].map((e: any) => ({
+          severity: 'error',
+          ...e,
+        })),
+      );
+      resetVerdict();
+      return;
+    }
+
+    const checked = check(parsed.ast);
+    const diagnostics: any[] = [...checked.diagnostics];
+
+    let inputs: Record<string, unknown> = {};
+    try {
+      inputs = inputsEl.value.trim() ? JSON.parse(inputsEl.value) : {};
+    } catch (e: any) {
+      diagnostics.push({
+        severity: 'error',
+        message: 'facts.json is not valid JSON: ' + e.message,
+        line: 0,
+        column: 0,
+      });
+      showDiagnostics(diagnostics);
+      return;
+    }
+
+    const queries = parsed.ast.declarations.filter(
+      (d: any) => d.kind === 'QueryDecl',
+    );
+    if (queries.length === 0) {
+      diagnostics.push({
+        severity: 'error',
+        message: 'no query in program — add a `query …` declaration',
+        line: 0,
+        column: 0,
+      });
+      showDiagnostics(diagnostics);
+      return;
+    }
+
+    const q = queries[0];
+    const env = envFromJson(
+      inputs,
+      q.asOf ?? new Date().toISOString().slice(0, 10),
+    );
+    const result = evaluate(parsed.ast, q, env);
+
+    renderVerdict(result, q);
+    showDiagnostics(diagnostics);
+  }
+
+  function renderVerdict(r: any, q: any) {
+    const verdictText =
+      r.value.kind === 'bool' ? (r.value.value ? 'ENFORCEABLE' : 'NOT ENFORCEABLE') : String(r.value.value);
+    verdictEl.textContent = verdictText;
+    verdictEl.style.color = r.value.kind === 'bool' && r.value.value ? '#2D5016' : '#8B1A1A';
+
+    winningEl.textContent = r.winningRule ?? '—';
+    defeatedEl.textContent = r.defeatedRules.length ? r.defeatedRules.join(', ') : '—';
+    asofEl.textContent = r.asOf;
+
+    authoritiesEl.innerHTML = '';
+    if (r.authorities.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'text-mute';
+      li.textContent = '—';
+      authoritiesEl.appendChild(li);
+    } else {
+      for (const a of r.authorities) {
+        const li = document.createElement('li');
+        li.className = 'border-l-2 border-accent-soft/40 pl-3 font-mono text-[13px]';
+        li.textContent = cleanAuthority(a);
+        authoritiesEl.appendChild(li);
+      }
+    }
+
+    proofEl.innerHTML = '';
+    for (const t of r.traces) {
+      const card = document.createElement('div');
+      card.className = 'border border-rule p-4';
+      const head = document.createElement('div');
+      head.className = 'flex items-center justify-between mb-2';
+      const title = document.createElement('span');
+      title.className = 'font-serif text-lg';
+      title.style.fontWeight = '500';
+      title.textContent = t.rule;
+      const status = document.createElement('span');
+      status.className = 'font-mono text-[11px] uppercase tracking-[0.14em]';
+      if (t.skippedReason) {
+        status.className += ' text-mute';
+        status.textContent = 'skipped';
+      } else if (t.satisfied) {
+        status.className += ' text-accent';
+        status.textContent = '✓ satisfied';
+      } else {
+        status.className += ' text-red-600';
+        status.textContent = '✗ failed';
+      }
+      head.append(title, status);
+      card.appendChild(head);
+
+      if (t.skippedReason) {
+        const p = document.createElement('p');
+        p.className = 'text-sub text-[14px]';
+        p.textContent = t.skippedReason;
+        card.appendChild(p);
+      } else {
+        const ul = document.createElement('ul');
+        ul.className = 'space-y-1.5 mt-2';
+        for (const req of t.requirements) {
+          const li = document.createElement('li');
+          li.className = 'font-mono text-[13px] flex items-baseline gap-2';
+          const icon = document.createElement('span');
+          icon.textContent = req.satisfied ? '✓' : '✗';
+          icon.className = req.satisfied ? 'text-accent' : 'text-red-600';
+          const clause = document.createElement('span');
+          clause.textContent = req.clause;
+          clause.className = 'text-ink';
+          const arrow = document.createElement('span');
+          arrow.textContent = '→';
+          arrow.className = 'text-mute';
+          const val = document.createElement('span');
+          val.textContent = fmtValue(req.value);
+          val.className = 'text-sub';
+          li.append(icon, clause, arrow, val);
+          ul.appendChild(li);
+        }
+        card.appendChild(ul);
+      }
+
+      proofEl.appendChild(card);
+    }
+  }
+
+  function resetVerdict() {
+    verdictEl.textContent = '—';
+    verdictEl.style.color = '';
+    winningEl.textContent = '—';
+    defeatedEl.textContent = '—';
+    asofEl.textContent = '—';
+    authoritiesEl.innerHTML = '';
+    proofEl.innerHTML = '';
+  }
+
+  function showDiagnostics(diags: any[]) {
+    if (diags.length === 0) {
+      diagBox.classList.add('hidden');
+      return;
+    }
+    diagBox.classList.remove('hidden');
+    diagList.innerHTML = '';
+    for (const d of diags) {
+      const li = document.createElement('li');
+      const sev = d.severity === 'error' ? 'text-red-600' : 'text-yellow-700';
+      li.className = sev;
+      li.textContent = `[${d.line}:${d.column}] ${d.severity}: ${d.message}`;
+      diagList.appendChild(li);
+    }
+  }
+
+  function cleanAuthority(raw: string): string {
+    return raw
+      .replace(/\s*\.\s*/g, '.')
+      .replace(/\s*\(\s*/g, '(')
+      .replace(/\s*\)\s*/g, ')')
+      .replace(/\s*,\s*/g, ', ')
+      .replace(/\s+"/g, ' "')
+      .trim();
+  }
+
+  function fmtValue(v: any): string {
+    if (!v) return 'null';
+    switch (v.kind) {
+      case 'bool':
+        return v.value ? 'true' : 'false';
+      case 'number':
+        return String(v.value);
+      case 'string':
+        return JSON.stringify(v.value);
+      case 'date':
+        return v.value;
+      case 'null':
+        return 'null';
+      case 'list':
+        return `[${v.value.length} items]`;
+      case 'object':
+        return '{…}';
+    }
+    return String(v);
+  }
+
+  // Kick things off.
+  runAll();
+</script>

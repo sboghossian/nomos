@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    font-feature-settings: "ss01", "ss02", "cv11";
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-cream text-ink font-sans antialiased;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-serif text-ink;
+    font-variation-settings:
+      "SOFT" 30,
+      "WONK" 0;
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    @apply text-5xl md:text-6xl leading-[1.05] tracking-tight;
+    font-weight: 500;
+  }
+  h2 {
+    @apply text-3xl md:text-4xl leading-tight;
+    font-weight: 500;
+  }
+  h3 {
+    @apply text-xl md:text-2xl leading-snug;
+    font-weight: 500;
+  }
+
+  p {
+    @apply text-sub;
+  }
+
+  a {
+    @apply underline decoration-rule underline-offset-4 hover:decoration-accent transition-colors;
+  }
+
+  code {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.92em;
+  }
+
+  /* Shiki code blocks */
+  .astro-code,
+  pre.astro-code {
+    @apply rounded-none border border-rule bg-white px-5 py-4 text-[14px] leading-relaxed overflow-x-auto;
+  }
+}
+
+@layer components {
+  .rule-top {
+    @apply border-t border-rule;
+  }
+  .rule-bottom {
+    @apply border-b border-rule;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] uppercase tracking-[0.14em] font-medium;
+    @apply border border-rule text-mute bg-white;
+  }
+
+  .chip-accent {
+    @apply border-accent-soft/30 bg-accent-bg text-accent;
+  }
+
+  .marker {
+    counter-increment: section;
+  }
+
+  .marker::before {
+    content: "§ " counter(section, decimal-leading-zero);
+    @apply font-mono text-[11px] uppercase tracking-[0.14em] text-mute;
+  }
+
+  .link-arrow::after {
+    content: " →";
+    transition: transform 0.2s ease;
+    display: inline-block;
+  }
+  .link-arrow:hover::after {
+    transform: translateX(2px);
+  }
+
+  .kbd {
+    @apply font-mono text-[12px] border border-rule bg-white px-1.5 py-0.5 rounded-sm text-ink;
+  }
+}

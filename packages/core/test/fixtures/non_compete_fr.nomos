@@ -1,0 +1,30 @@
+// A French non-compete clause, reasoned about as of 2026-04-18.
+
+type Party {
+  name: String
+  role: "seller" | "buyer" | "employee" | "employer" | "consumer"
+}
+
+type NonCompete {
+  duration: Duration
+  scope: Geography
+  compensation_pct: Float
+}
+
+rule non_compete_enforceable @ FR from 2016-08-10 {
+  requires clause.duration <= 24
+  requires clause.scope is reasonable
+  requires clause.compensation_pct >= 0.30
+  authority: code_du_travail.art("L1121-1")
+  authority: cass_soc(2002-07-10, "00-45135")
+}
+
+rule consumer_protection_override @ FR priority 100 defeats non_compete_enforceable when party.role == "consumer" {
+  authority: code_conso.art("L212-1")
+}
+
+fact parties: List<Party> = extract<Party>(contract) using llm("claude-opus-4-7") verified_by human if confidence < 0.95
+
+fact clause: NonCompete = extract<NonCompete>(contract, section: "non-compete") using llm("claude-opus-4-7")
+
+query non_compete_enforceable as of 2026-04-18

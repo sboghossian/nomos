@@ -1,0 +1,9 @@
+{
+  "parties": [{ "name": "Alice", "role": "consumer" }],
+  "party": { "name": "Alice", "role": "consumer" },
+  "clause": {
+    "duration": 18,
+    "scope": { "reasonable": true },
+    "compensation_pct": 0.35
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "parties": [
+    {
+      "name": "Alice Dupont",
+      "role": "employee"
+    },
+    {
+      "name": "Acme S.A.",
+      "role": "employer"
+    }
+  ],
+  "party": {
+    "name": "Alice Dupont",
+    "role": "employee"
+  },
+  "clause": {
+    "duration": 18,
+    "scope": { "reasonable": true, "region": "Île-de-France" },
+    "compensation_pct": 0.35
+  }
+}
