@@ -99,7 +99,12 @@ import type {
 
 class NomosCstParser extends CstParser {
   constructor() {
-    super(allTokens, { recoveryEnabled: false });
+    super(allTokens, {
+      recoveryEnabled: false,
+      // CST node locations let the postfix visitor pair args/indices to
+      // their enclosing `(` / `[` by source offset.
+      nodeLocationTracking: "full",
+    });
     this.performSelfAnalysis();
   }
 
@@ -631,11 +636,7 @@ function visitRuleDecl(cst: CstNode): RuleDecl {
     const auth = subOf(stmt, "authorityClause");
     if (auth) {
       const expr = subOf(auth, "expression")!;
-      authorities.push({
-        kind: "AuthorityRef",
-        span: spanOf(auth),
-        raw: stringifyExpression(expr),
-      });
+      authorities.push(buildAuthorityRef(visitExpression(expr), spanOf(auth)));
     }
   }
 
@@ -966,24 +967,118 @@ function visitExtractExpr(cst: CstNode): ExtractExpr {
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 /**
- * Quick-and-dirty stringification of an expression CST — used while we
- * still treat authority references as raw strings. Phase 2 will replace
- * this with typed `CitationRef` / `CaseRef` nodes.
+ * Build a typed AuthorityRef from an already-visited expression AST.
+ *
+ * Nomos's canonical authority shapes:
+ *
+ *   publisher.art("L1121-1")          → article
+ *   publisher.section("7.2")          → section
+ *   publisher.decree("...", DATE)     → decree
+ *   publisher(DATE, "00-45135")       → case
+ *   publisher(anything else)          → generic
+ *
+ * The grammar is deliberately loose — Nomos doesn't enforce one jurisdiction's
+ * citation conventions. We classify by shape, keep a stable canonical string
+ * for downstream resolvers, and retain anything unexpected in `extra`.
  */
-function stringifyExpression(cst: CstNode): string {
-  const parts: string[] = [];
-  const walk = (n: CstNode | IToken) => {
-    if (isToken(n)) {
-      parts.push(n.image);
-      return;
+function buildAuthorityRef(expr: Expression, span: Span): AuthorityRef {
+  // Case 1: publisher.method(args…) → method decides the citation kind
+  if (expr.kind === "CallExpr" && expr.callee.kind === "MemberExpr") {
+    const member = expr.callee;
+    if (member.object.kind === "IdentExpr") {
+      const source = member.object.name;
+      const method = member.property;
+      const args = expr.args.map(flatExprToString);
+      const primary = args[0] ?? "";
+      const date = args.find((a) => /^\d{4}-\d{2}-\d{2}$/.test(a)) ?? null;
+      let citationKind: AuthorityRef["citationKind"] = "generic";
+      if (method === "art" || method === "article") citationKind = "article";
+      else if (method === "section" || method === "sec")
+        citationKind = "section";
+      else if (method === "decree") citationKind = "decree";
+      const extra = args.filter((a) => a !== primary && a !== date);
+      return {
+        kind: "AuthorityRef",
+        span,
+        source,
+        citationKind,
+        primary: primary.replace(/^"|"$/g, ""),
+        date,
+        extra,
+        canonical: renderAuthority(source, method, args),
+      };
     }
-    for (const key of Object.keys(n.children)) {
-      const arr = n.children[key] ?? [];
-      for (const child of arr) walk(child);
-    }
+  }
+
+  // Case 2: publisher(args…) — typically a case citation.
+  if (expr.kind === "CallExpr" && expr.callee.kind === "IdentExpr") {
+    const source = expr.callee.name;
+    const args = expr.args.map(flatExprToString);
+    const date = args.find((a) => /^\d{4}-\d{2}-\d{2}$/.test(a)) ?? null;
+    const primary =
+      args.find((a) => /^".+"$/.test(a))?.replace(/^"|"$/g, "") ?? "";
+    const extra = args.filter((a) => a !== date && !/^".+"$/.test(a));
+    return {
+      kind: "AuthorityRef",
+      span,
+      source,
+      citationKind: "case",
+      primary,
+      date,
+      extra,
+      canonical: renderAuthority(source, null, args),
+    };
+  }
+
+  // Fallback: keep whatever the user wrote as a generic canonical string.
+  return {
+    kind: "AuthorityRef",
+    span,
+    source: expr.kind === "IdentExpr" ? expr.name : "<expr>",
+    citationKind: "generic",
+    primary: flatExprToString(expr),
+    date: null,
+    extra: [],
+    canonical: flatExprToString(expr),
   };
-  walk(cst);
-  return parts.join(" ");
+}
+
+/** Render a citation into the canonical "publisher.method(args)" form. */
+function renderAuthority(
+  source: string,
+  method: string | null,
+  args: string[],
+): string {
+  const prefix = method ? `${source}.${method}` : source;
+  return `${prefix}(${args.join(", ")})`;
+}
+
+/** Flatten a simple expression back to its source text for display. */
+function flatExprToString(e: Expression): string {
+  switch (e.kind) {
+    case "NumberLit":
+      return String(e.value);
+    case "StringLit":
+      return JSON.stringify(e.value);
+    case "DateLit":
+      return e.value;
+    case "BoolLit":
+      return String(e.value);
+    case "IdentExpr":
+      return e.name;
+    case "MemberExpr":
+      return `${flatExprToString(e.object)}.${e.property}`;
+    case "CallExpr":
+      return `${flatExprToString(e.callee)}(${e.args.map(flatExprToString).join(", ")})`;
+    case "IndexExpr":
+      return `${flatExprToString(e.object)}[${flatExprToString(e.index)}]`;
+    case "BinaryExpr":
+      return `${flatExprToString(e.left)} ${e.op} ${flatExprToString(e.right)}`;
+    case "IsExpr":
+      return `${flatExprToString(e.subject)} is ${e.predicate}`;
+    case "ExtractExpr":
+      return `extract<…>`;
+  }
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────

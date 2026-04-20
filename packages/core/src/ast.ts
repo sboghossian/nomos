@@ -83,10 +83,36 @@ export interface RuleDecl extends Node {
   authorities: AuthorityRef[];
 }
 
+/**
+ * A reference to a legal authority — a statute article, a case, a decree.
+ *
+ * The `source` is the authority publisher (e.g. `code_du_travail`, `cass_soc`,
+ * `code_conso`). The `kind` tells the resolver what shape to expect:
+ *
+ *   - `article` — a statute article: `code_du_travail.art("L1121-1")`
+ *   - `case`    — a judicial decision: `cass_soc(2002-07-10, "00-45135")`
+ *   - `section` — a clause/section of a document: `policy.section("7.2")`
+ *   - `decree`  — an executive decree with a date + number
+ *   - `generic` — any other shape; we keep the args raw for now
+ *
+ * This lets the pretty-printer and the future citation-resolver do their job
+ * without string-surgery. Nomos doesn't commit to any one jurisdiction's
+ * citation format — publishers are user-named identifiers.
+ */
 export interface AuthorityRef extends Node {
   kind: "AuthorityRef";
-  /** free-form source reference string — parsed fully in a later phase */
-  raw: string;
+  /** The publisher/source name (e.g. "code_du_travail", "cass_soc"). */
+  source: string;
+  /** Shape of the citation. */
+  citationKind: "article" | "case" | "section" | "decree" | "generic";
+  /** Primary identifier: article number, case number, section id. */
+  primary: string;
+  /** Optional date: case decision date, decree date. ISO YYYY-MM-DD. */
+  date: string | null;
+  /** Any remaining positional arguments we don't yet have a typed slot for. */
+  extra: string[];
+  /** Canonical string form — used by resolvers and as a stable hash. */
+  canonical: string;
 }
 
 // ─── Facts ─────────────────────────────────────────────────────────────────

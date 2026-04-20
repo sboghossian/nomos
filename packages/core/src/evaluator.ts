@@ -75,6 +75,26 @@ export interface EvalResult {
   traces: RuleTrace[];
   /** As-of date used for temporal resolution. */
   asOf: string;
+  /**
+   * Why the winner won: human-readable explanation of the defeasibility
+   * resolution. Undefined when only one rule fired (no conflict).
+   */
+  tiebreaker?: TiebreakerExplanation;
+}
+
+export interface TiebreakerExplanation {
+  /** Rank-ordered candidates with their scores. */
+  candidates: {
+    rule: string;
+    priority: number;
+    specificity: number;
+    from: string | null;
+    declIndex: number;
+  }[];
+  /** Which criterion decided the contest: priority, specificity, recency, lex posterior. */
+  decidedBy: "priority" | "specificity" | "recency" | "lex-posterior";
+  /** Short sentence describing the winning margin. */
+  summary: string;
 }
 
 // ─── Entry point ───────────────────────────────────────────────────────────
@@ -150,19 +170,78 @@ export function evaluate(
     };
   }
 
-  // Resolve by priority. Highest priority wins. Ties broken by declaration
-  // order (later wins — lex posterior, the classic Roman-law tiebreaker).
-  fired.sort((a, b) => b.rule.priority - a.rule.priority);
-  const winner = fired[0]!;
+  // ─── Defeasibility resolution ───────────────────────────────────────
+  //
+  // Classical legal maxims, in descending precedence:
+  //   1. Priority    — user-declared `priority N`. Higher wins.
+  //   2. Specificity — lex specialis. More requires/when/defeats → more specific.
+  //   3. Recency     — lex posterior. Later `from` date wins.
+  //   4. Decl order  — last-declared wins (final fallback).
+  //
+  // Each fired candidate gets a composite score, we sort, we record which
+  // criterion decided it so the UI can show a proof of the tiebreak itself.
 
-  // If the winner is a defeater of the target, the target is defeated.
+  const ruleIndex = new Map(rules.map((r, i) => [r.name, i]));
+
+  const scored = fired.map(({ rule, trace }) => ({
+    rule,
+    trace,
+    priority: rule.priority,
+    specificity: specificityOf(rule),
+    from: rule.from,
+    declIndex: ruleIndex.get(rule.name) ?? 0,
+  }));
+
+  scored.sort((a, b) => {
+    if (a.priority !== b.priority) return b.priority - a.priority;
+    if (a.specificity !== b.specificity) return b.specificity - a.specificity;
+    // Compare `from` lexicographically (ISO dates are lexicographic-sortable).
+    // Rules without a `from` get ranked as older (loses the tiebreak).
+    const af = a.from ?? "";
+    const bf = b.from ?? "";
+    if (af !== bf) return bf.localeCompare(af);
+    return b.declIndex - a.declIndex;
+  });
+
+  const winner = scored[0]!;
   const targetIsWinner = winner.rule.name === target;
   const defeated: string[] = [];
   if (!targetIsWinner && winner.rule.defeats.includes(target)) {
     defeated.push(target);
   }
 
-  return {
+  // Build the tiebreaker explanation only when there's a real conflict.
+  let tiebreaker: TiebreakerExplanation | undefined;
+  if (scored.length > 1) {
+    const runner = scored[1]!;
+    let decidedBy: TiebreakerExplanation["decidedBy"] = "lex-posterior";
+    let summary = "";
+    if (winner.priority !== runner.priority) {
+      decidedBy = "priority";
+      summary = `"${winner.rule.name}" priority ${winner.priority} beats "${runner.rule.name}" priority ${runner.priority}.`;
+    } else if (winner.specificity !== runner.specificity) {
+      decidedBy = "specificity";
+      summary = `lex specialis — "${winner.rule.name}" is more specific (${winner.specificity} signals) than "${runner.rule.name}" (${runner.specificity}).`;
+    } else if ((winner.from ?? "") !== (runner.from ?? "")) {
+      decidedBy = "recency";
+      summary = `lex posterior — "${winner.rule.name}" (from ${winner.from ?? "—"}) is more recent than "${runner.rule.name}" (from ${runner.from ?? "—"}).`;
+    } else {
+      summary = `tied on priority/specificity/recency — last-declared wins: "${winner.rule.name}".`;
+    }
+    tiebreaker = {
+      candidates: scored.map((s) => ({
+        rule: s.rule.name,
+        priority: s.priority,
+        specificity: s.specificity,
+        from: s.from,
+        declIndex: s.declIndex,
+      })),
+      decidedBy,
+      summary,
+    };
+  }
+
+  const result: EvalResult = {
     value: { kind: "bool", value: targetIsWinner },
     winningRule: winner.rule.name,
     defeatedRules: defeated,
@@ -170,6 +249,20 @@ export function evaluate(
     traces,
     asOf: env.asOf,
   };
+  if (tiebreaker) result.tiebreaker = tiebreaker;
+  return result;
+}
+
+/**
+ * Specificity score — a rough proxy for "how narrow is this rule".
+ * More signals → higher specificity → wins lex-specialis tiebreaks.
+ *
+ *   requires clause      +1 each
+ *   when guard           +2 (a hard precondition on context)
+ *   defeats declaration  +1 each (explicit override signals specificity)
+ */
+function specificityOf(rule: RuleDecl): number {
+  return rule.requires.length + (rule.when ? 2 : 0) + rule.defeats.length;
 }
 
 // ─── Rule evaluation ───────────────────────────────────────────────────────
@@ -179,7 +272,7 @@ function evaluateRule(rule: RuleDecl, env: Env): RuleTrace {
     rule: rule.name,
     satisfied: false,
     requirements: [],
-    authorities: rule.authorities.map((a) => a.raw),
+    authorities: rule.authorities.map((a) => a.canonical),
   };
 
   // Temporal validity: if the rule has a `from` date, skip when the query

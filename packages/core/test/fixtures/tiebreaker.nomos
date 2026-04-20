@@ -1,0 +1,22 @@
+// A classic tie. Two rules with identical priority contradict each other.
+// Resolution: lex specialis — the rule with more constraints wins.
+
+type Employee {
+  role: String
+  seniority_years: Float
+  is_executive: Boolean
+}
+
+// General rule: all employees get 2 weeks' notice.
+rule two_weeks_notice @ US from 2020-01-01 {
+  requires employee.seniority_years >= 0
+}
+
+// Specific rule: executives with 5+ years get 30 days' notice.
+// Same priority as the general rule — specificity has to break the tie.
+rule executive_thirty_days @ US from 2020-01-01 defeats two_weeks_notice when employee.is_executive {
+  requires employee.seniority_years >= 5
+  authority: corporate_governance_policy.section("7.2")
+}
+
+query two_weeks_notice as of 2026-04-18

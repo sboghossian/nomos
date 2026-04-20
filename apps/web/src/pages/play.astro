@@ -155,6 +155,25 @@ const scenarios = [
             <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Authorities</span>
             <ul id="authorities" class="mt-2 space-y-1.5 text-[14px]"></ul>
           </div>
+
+          <div id="tiebreaker" class="mt-6 hidden">
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Tiebreaker</span>
+            <div class="mt-2 border-l-2 border-accent pl-3">
+              <p id="tb-summary" class="text-[14px] text-ink font-serif italic"></p>
+              <p id="tb-decided" class="mt-1 text-[12px] text-mute font-mono">decided by: <span class="text-accent">—</span></p>
+              <table class="mt-3 text-[12px] font-mono w-full">
+                <thead class="text-mute">
+                  <tr>
+                    <th class="text-left pr-3 pb-1">rule</th>
+                    <th class="text-right pr-3 pb-1">prio</th>
+                    <th class="text-right pr-3 pb-1">spec</th>
+                    <th class="text-right pr-3 pb-1">from</th>
+                  </tr>
+                </thead>
+                <tbody id="tb-candidates" class="text-ink"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         <!-- Proof tree -->
@@ -179,7 +198,7 @@ const scenarios = [
   <footer class="rule-top">
     <div class="max-w-wide mx-auto px-6 md:px-10 py-8 flex items-center justify-between text-[12px] text-mute">
       <span>νόμος · running entirely in your browser. No data leaves this page.</span>
-      <a href="https://github.com/nomos-lang/nomos" class="no-underline hover:text-ink">GitHub ↗</a>
+      <a href="https://github.com/sboghossian/nomos" class="no-underline hover:text-ink">GitHub ↗</a>
     </div>
   </footer>
 </Layout>
@@ -200,6 +219,10 @@ const scenarios = [
   const withLlmEl = $<HTMLInputElement>('with-llm');
   const extractedBox = $('extracted');
   const extractedList = $('extracted-list');
+  const tiebreakerBox = $('tiebreaker');
+  const tbSummary = $('tb-summary');
+  const tbDecided = $('tb-decided');
+  const tbCandidates = $('tb-candidates');
 
   const API_BASE =
     window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -454,6 +477,27 @@ const scenarios = [
     defeatedEl.textContent = r.defeatedRules.length ? r.defeatedRules.join(', ') : '—';
     asofEl.textContent = r.asOf;
 
+    // Tiebreaker block — only when there was a real contest.
+    if (r.tiebreaker) {
+      tiebreakerBox.classList.remove('hidden');
+      tbSummary.textContent = r.tiebreaker.summary;
+      tbDecided.innerHTML =
+        'decided by: <span class="text-accent">' + r.tiebreaker.decidedBy + '</span>';
+      tbCandidates.innerHTML = '';
+      r.tiebreaker.candidates.forEach((c: any, i: number) => {
+        const tr = document.createElement('tr');
+        tr.className = i === 0 ? 'text-accent' : 'text-sub';
+        tr.innerHTML =
+          '<td class="pr-3 py-0.5">' + c.rule + '</td>' +
+          '<td class="text-right pr-3">' + c.priority + '</td>' +
+          '<td class="text-right pr-3">' + c.specificity + '</td>' +
+          '<td class="text-right pr-3">' + (c.from ?? '—') + '</td>';
+        tbCandidates.appendChild(tr);
+      });
+    } else {
+      tiebreakerBox.classList.add('hidden');
+    }
+
     authoritiesEl.innerHTML = '';
     if (r.authorities.length === 0) {
       const li = document.createElement('li');
@@ -464,7 +508,7 @@ const scenarios = [
       for (const a of r.authorities) {
         const li = document.createElement('li');
         li.className = 'border-l-2 border-accent-soft/40 pl-3 font-mono text-[13px]';
-        li.textContent = cleanAuthority(a);
+        li.textContent = a;
         authoritiesEl.appendChild(li);
       }
     }
@@ -553,15 +597,6 @@ const scenarios = [
     }
   }
 
-  function cleanAuthority(raw: string): string {
-    return raw
-      .replace(/\s*\.\s*/g, '.')
-      .replace(/\s*\(\s*/g, '(')
-      .replace(/\s*\)\s*/g, ')')
-      .replace(/\s*,\s*/g, ', ')
-      .replace(/\s+"/g, ' "')
-      .trim();
-  }
 
   function fmtValue(v: any): string {
     if (!v) return 'null';

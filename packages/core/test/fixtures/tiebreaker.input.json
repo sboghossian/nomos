@@ -1,0 +1,7 @@
+{
+  "employee": {
+    "role": "CTO",
+    "seniority_years": 8,
+    "is_executive": true
+  }
+}

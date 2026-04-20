@@ -26,7 +26,21 @@ export function renderResult(r: EvalResult, queryLabel: string): string {
   }
   if (r.authorities.length) {
     out.push(`  ${dim("authorities ")}`);
-    for (const a of r.authorities) out.push(`      ${cleanAuthority(a)}`);
+    for (const a of r.authorities) out.push(`      ${a}`);
+  }
+
+  // Tiebreaker explanation — only when there was a real contest.
+  if (r.tiebreaker) {
+    out.push("");
+    out.push(sectionHeader("TIEBREAKER"));
+    out.push(`  ${dim("decided by  ")}  ${cyan(r.tiebreaker.decidedBy)}`);
+    out.push(`  ${dim("summary     ")}  ${r.tiebreaker.summary}`);
+    out.push(`  ${dim("candidates  ")}`);
+    for (const c of r.tiebreaker.candidates) {
+      out.push(
+        `      ${bold(c.rule)}  ${dim("prio")} ${c.priority}  ${dim("spec")} ${c.specificity}  ${dim("from")} ${c.from ?? "—"}  ${dim("decl#")} ${c.declIndex}`,
+      );
+    }
   }
 
   out.push("");
@@ -105,15 +119,4 @@ function formatValue(v: Value): string {
     case "object":
       return "{…}";
   }
-}
-
-/** Collapse the ugly "a . b ( x )" token-join into "a.b(x)". */
-function cleanAuthority(raw: string): string {
-  return raw
-    .replace(/\s*\.\s*/g, ".")
-    .replace(/\s*\(\s*/g, "(")
-    .replace(/\s*\)\s*/g, ")")
-    .replace(/\s*,\s*/g, ", ")
-    .replace(/\s+"/g, ' "')
-    .trim();
 }

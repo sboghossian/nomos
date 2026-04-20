@@ -65,7 +65,7 @@ function printRuleDecl(d: RuleDecl): string[] {
     out.push(...indent([`requires ${printExpr(r)}`]));
   }
   for (const a of d.authorities) {
-    out.push(...indent([`authority: ${a.raw}`]));
+    out.push(...indent([`authority: ${a.canonical}`]));
   }
   return out;
 }
