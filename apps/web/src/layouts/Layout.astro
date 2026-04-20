@@ -83,6 +83,12 @@ const absImage = image.startsWith("http") ? image : `${site}${image}`;
       })}
     />
 
+    <!-- Flip to JS-enhanced mode *before paint* so the reveal CSS kicks in.
+         If this script doesn't run, content stays visible — no broken page. -->
+    <script is:inline>
+      document.documentElement.classList.add("js");
+    </script>
+
     <title>{title}</title>
   </head>
   <body>
@@ -102,6 +108,15 @@ const absImage = image.startsWith("http") ? image : `${site}${image}`;
         { threshold: 0.08, rootMargin: "0px 0px -40px 0px" },
       );
       document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+
+      // Safety net: if for any reason the observer misses an element
+      // (slow frames, dynamic content), reveal everything still hidden
+      // after 2 seconds.
+      setTimeout(() => {
+        document
+          .querySelectorAll(".reveal:not(.revealed)")
+          .forEach((el) => el.classList.add("revealed"));
+      }, 2000);
     </script>
   </body>
 </html>
