@@ -1,0 +1,267 @@
+{
+  "summary": {
+    "ranAt": "2026-04-20T20:41:43.427Z",
+    "model": "claude-sonnet-4-5",
+    "samplesPerCategory": 5,
+    "categories": {
+      "Document Name": {
+        "count": 5,
+        "exact_match": 1,
+        "contains": 1,
+        "mean_f1": 1,
+        "mean_conf": 0.972
+      },
+      "Parties": {
+        "count": 5,
+        "exact_match": 0,
+        "contains": 1,
+        "mean_f1": 0.199,
+        "mean_conf": 0.956
+      },
+      "Effective Date": {
+        "count": 5,
+        "exact_match": 0.2,
+        "contains": 0.4,
+        "mean_f1": 0.446,
+        "mean_conf": 0.986
+      },
+      "Governing Law": {
+        "count": 5,
+        "exact_match": 0.6,
+        "contains": 0.6,
+        "mean_f1": 1,
+        "mean_conf": 0.986
+      }
+    },
+    "overall": {
+      "count": 20,
+      "exact_match": 0.45,
+      "contains": 0.75,
+      "mean_f1": 0.661,
+      "mean_conf": 0.975
+    },
+    "latencyTotalMs": 78123
+  },
+  "perItem": [
+    {
+      "category": "Document Name",
+      "docId": "LIMEENERGYCO_09_09_1999-EX-10-DISTRIBUTOR AGREEMENT",
+      "goldAnswer": "DISTRIBUTOR AGREEMENT",
+      "extracted": "DISTRIBUTOR AGREEMENT",
+      "confidence": 0.98,
+      "exact_match": true,
+      "contains": true,
+      "f1": 1,
+      "latencyMs": 4436
+    },
+    {
+      "category": "Document Name",
+      "docId": "WHITESMOKE,INC_11_08_2011-EX-10.26-PROMOTION AND DISTRIBUTION AGREEMENT",
+      "goldAnswer": "Promotion and Distribution Agreement",
+      "extracted": "PROMOTION AND DISTRIBUTION AGREEMENT",
+      "confidence": 0.98,
+      "exact_match": true,
+      "contains": true,
+      "f1": 1,
+      "latencyMs": 6871
+    },
+    {
+      "category": "Document Name",
+      "docId": "LohaCompanyltd_20191209_F-1_EX-10.16_11917878_EX-10.16_Supply Agreement",
+      "goldAnswer": "SUPPLY CONTRACT",
+      "extracted": "SUPPLY CONTRACT",
+      "confidence": 0.95,
+      "exact_match": true,
+      "contains": true,
+      "f1": 1,
+      "latencyMs": 3946
+    },
+    {
+      "category": "Document Name",
+      "docId": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10.3-WEB SITE HOSTING AGREEMENT",
+      "goldAnswer": "WEB SITE HOSTING AGREEMENT",
+      "extracted": "WEB SITE HOSTING AGREEMENT",
+      "confidence": 1,
+      "exact_match": true,
+      "contains": true,
+      "f1": 1,
+      "latencyMs": 3466
+    },
+    {
+      "category": "Document Name",
+      "docId": "NELNETINC_04_08_2020-EX-1-JOINT FILING AGREEMENT",
+      "goldAnswer": "JOINT FILING AGREEMENT",
+      "extracted": "JOINT FILING AGREEMENT",
+      "confidence": 0.95,
+      "exact_match": true,
+      "contains": true,
+      "f1": 1,
+      "latencyMs": 4301
+    },
+    {
+      "category": "Parties",
+      "docId": "LIMEENERGYCO_09_09_1999-EX-10-DISTRIBUTOR AGREEMENT",
+      "goldAnswer": "Distributor",
+      "extracted": "Electric City Corp., a Delaware corporation (\"Company\") and Electric City of Illinois LLC (\"Distributor\")",
+      "confidence": 0.98,
+      "exact_match": false,
+      "contains": true,
+      "f1": 0.154,
+      "latencyMs": 3463
+    },
+    {
+      "category": "Parties",
+      "docId": "WHITESMOKE,INC_11_08_2011-EX-10.26-PROMOTION AND DISTRIBUTION AGREEMENT",
+      "goldAnswer": "Distributor",
+      "extracted": "This Promotion and Distribution Agreement including all exhibits (collectively referred to as the \"Agreement\"), effective as of 1 August 2011 (the \"Effective Date\"), is made by and between Whitesmoke Inc., with registered offices/principle place of business at 501 Silverside Road, Suite 105, Wilmington DE 19809, USA, (\"Distributor\"), and Google Inc whose principle place of business is at 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA (\"Google\").",
+      "confidence": 1,
+      "exact_match": false,
+      "contains": true,
+      "f1": 0.038,
+      "latencyMs": 5717
+    },
+    {
+      "category": "Parties",
+      "docId": "LohaCompanyltd_20191209_F-1_EX-10.16_11917878_EX-10.16_Supply Agreement",
+      "goldAnswer": "The seller:",
+      "extracted": "The buyer/End-User: Shenzhen LOHAS Supply Chain Management Co., Ltd. ... The seller: ADD: ... The buyer entrust SHENZHEN YICHANGTAI IMPORT AND EXPORT TRADE CO., LTD or SHENZHEN LEHEYUAN TRADING CO, LTD (hereinafter referred to as the \"entrusted party\" or \"YICHANGTAI\" or \"LEHEYUAN\")",
+      "confidence": 0.85,
+      "exact_match": false,
+      "contains": true,
+      "f1": 0.133,
+      "latencyMs": 3699
+    },
+    {
+      "category": "Parties",
+      "docId": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10.3-WEB SITE HOSTING AGREEMENT",
+      "goldAnswer": "Centrack International",
+      "extracted": "Centrack International, a Florida corporation (\"the Customer\"), and i-on interactive, a Florida corporation (\"i-on\")",
+      "confidence": 1,
+      "exact_match": false,
+      "contains": true,
+      "f1": 0.308,
+      "latencyMs": 3349
+    },
+    {
+      "category": "Parties",
+      "docId": "NELNETINC_04_08_2020-EX-1-JOINT FILING AGREEMENT",
+      "goldAnswer": "Co-Trustee",
+      "extracted": "Shelby J. Butterfield\n\nBUTTERFIELD FAMILY TRUST\n\nBy: /s/ Shelby J. Butterfield Shelby J. Butterfield Co-Trustee",
+      "confidence": 0.95,
+      "exact_match": false,
+      "contains": true,
+      "f1": 0.364,
+      "latencyMs": 2780
+    },
+    {
+      "category": "Effective Date",
+      "docId": "LIMEENERGYCO_09_09_1999-EX-10-DISTRIBUTOR AGREEMENT",
+      "goldAnswer": "The term of this  Agreement  shall be ten (10)                            years (the \"Term\")  which shall  commence on the date                            upon which the Company  delivers to  Distributor  the                            last Sample, as defined  hereinafter.",
+      "extracted": "this 7th day of September, 1999",
+      "confidence": 0.98,
+      "exact_match": false,
+      "contains": false,
+      "f1": 0.133,
+      "latencyMs": 4330
+    },
+    {
+      "category": "Effective Date",
+      "docId": "WHITESMOKE,INC_11_08_2011-EX-10.26-PROMOTION AND DISTRIBUTION AGREEMENT",
+      "goldAnswer": "1 August 2011",
+      "extracted": "effective as of 1 August 2011",
+      "confidence": 1,
+      "exact_match": false,
+      "contains": true,
+      "f1": 0.667,
+      "latencyMs": 3327
+    },
+    {
+      "category": "Effective Date",
+      "docId": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10.3-WEB SITE HOSTING AGREEMENT",
+      "goldAnswer": "The term of this Agreement for the Hosted Site shall commence upon April 1, 1999 and shall continue for a period of six (6) months, unless earlier terminated in accordance with provisions hereof.",
+      "extracted": "This WEB SITE HOSTING AGREEMENT (\"this Agreement\") is entered into this 6th day of April, 1999",
+      "confidence": 1,
+      "exact_match": false,
+      "contains": false,
+      "f1": 0.286,
+      "latencyMs": 5345
+    },
+    {
+      "category": "Effective Date",
+      "docId": "ADAMSGOLFINC_03_21_2005-EX-10.17-ENDORSEMENT AGREEMENT",
+      "goldAnswer": "The Term of this Agreement shall be for a period of [* ****] years and [*****] months commencing the 1st day of September 2004 and terminating the [*****] day of [*****].",
+      "extracted": "This Agreement is entered into on January 13, 2005",
+      "confidence": 1,
+      "exact_match": false,
+      "contains": false,
+      "f1": 0.143,
+      "latencyMs": 3175
+    },
+    {
+      "category": "Effective Date",
+      "docId": "KIROMICBIOPHARMA,INC_05_11_2020-EX-10.23-CONSULTING AGREEMENT",
+      "goldAnswer": "This letter agreement will be effective as of July 1, 2018.",
+      "extracted": "This letter agreement will be effective as of July 1, 2018.",
+      "confidence": 0.95,
+      "exact_match": true,
+      "contains": true,
+      "f1": 1,
+      "latencyMs": 2453
+    },
+    {
+      "category": "Governing Law",
+      "docId": "LIMEENERGYCO_09_09_1999-EX-10-DISTRIBUTOR AGREEMENT",
+      "goldAnswer": "This Agreement is to be construed according to the laws          of the State of Illinois.",
+      "extracted": "This Agreement is to be construed according to the laws of the State of Illinois.",
+      "confidence": 0.98,
+      "exact_match": false,
+      "contains": false,
+      "f1": 1,
+      "latencyMs": 2474
+    },
+    {
+      "category": "Governing Law",
+      "docId": "WHITESMOKE,INC_11_08_2011-EX-10.26-PROMOTION AND DISTRIBUTION AGREEMENT",
+      "goldAnswer": "This Agreement is governed by English law and the parties submit to the exclusive jurisdiction of the English courts in  relation to any dispute (contractual or non-contractual) concerning this Agreement save that either party may apply to any court for an  injunction or other relief to protect its Intellectual Property Rights.",
+      "extracted": "This Agreement is governed by English law and the parties submit to the exclusive jurisdiction of the English courts in relation to any dispute (contractual or non-contractual) concerning this Agreement save that either party may apply to any court for an injunction or other relief to protect its Intellectual Property Rights.",
+      "confidence": 1,
+      "exact_match": false,
+      "contains": false,
+      "f1": 1,
+      "latencyMs": 4492
+    },
+    {
+      "category": "Governing Law",
+      "docId": "LohaCompanyltd_20191209_F-1_EX-10.16_11917878_EX-10.16_Supply Agreement",
+      "goldAnswer": "It will be governed by the law of the People's Republic of China ,otherwise it is governed by United Nations Convention on Contract for the International Sale of Goods.",
+      "extracted": "It will be governed by the law of the People's Republic of China ,otherwise it is governed by United Nations Convention on Contract for the International Sale of Goods.",
+      "confidence": 0.95,
+      "exact_match": true,
+      "contains": true,
+      "f1": 1,
+      "latencyMs": 4948
+    },
+    {
+      "category": "Governing Law",
+      "docId": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10.3-WEB SITE HOSTING AGREEMENT",
+      "goldAnswer": "This Agreement was entered into in the State of Florida, and its validity, construction, interpretation, and legal effect shall be governed by the laws and judicial decisions of the State of Florida applicable to contracts entered into and performed entirely within the State of Florida.",
+      "extracted": "This Agreement was entered into in the State of Florida, and its validity, construction, interpretation, and legal effect shall be governed by the laws and judicial decisions of the State of Florida applicable to contracts entered into and performed entirely within the State of Florida.",
+      "confidence": 1,
+      "exact_match": true,
+      "contains": true,
+      "f1": 1,
+      "latencyMs": 2508
+    },
+    {
+      "category": "Governing Law",
+      "docId": "ADAMSGOLFINC_03_21_2005-EX-10.17-ENDORSEMENT AGREEMENT",
+      "goldAnswer": "This Agreement shall be governed and construed according to the laws of the State of Kansas.",
+      "extracted": "This Agreement shall be governed and construed according to the laws of the State of Kansas.",
+      "confidence": 1,
+      "exact_match": true,
+      "contains": true,
+      "f1": 1,
+      "latencyMs": 3030
+    }
+  ]
+}

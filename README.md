@@ -75,9 +75,28 @@ and the rules defeated.
 
 ## Status
 
-**v0.0.1 · In active development.** The compiler runs. A dozen core grammar
-features work. A CLI and a web playground are live. The LLM bridge and the
-specificity/recency tiebreakers are next.
+**v0.0.2 · In active development.** The compiler runs. The LLM bridge runs
+end-to-end. Defeasibility resolves priority, specificity, and recency.
+A CLI, a web playground, a VS Code extension, and a Claude Skill ship.
+
+## Benchmarks
+
+First honest run on the [CUAD](https://www.atticusprojectai.org/cuad)
+dataset — 20 extractions, 4 categories, Claude Sonnet 4.5. Reproducible
+via `bench/cuad/harness.mjs`.
+
+| Category       |  n  | Exact match | Contains |    F1    | Confidence |
+| :------------- | :-: | :---------: | :------: | :------: | :--------: |
+| Document Name  |  5  |    1.00     |   1.00   |   1.00   |    0.97    |
+| Parties        |  5  |    0.00     |   1.00   |   0.20   |    0.96    |
+| Effective Date |  5  |    0.20     |   0.40   |   0.45   |    0.99    |
+| Governing Law  |  5  |    0.60     |   0.60   |   1.00   |    0.99    |
+| **Overall**    | 20  |  **0.45**   | **0.75** | **0.66** |  **0.97**  |
+
+Parties and dates are the gap — the model extracts semantically correct
+but verbose spans (containment 100% on Parties; F1 only 0.20). Schema
+discipline + category-specific types close most of that. Full writeup:
+[/research/benchmarks](https://nomos.dashable.dev/research/benchmarks).
 
 See [`tasks/todo.md`](./tasks/todo.md) for the full plan.
 
