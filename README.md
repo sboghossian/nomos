@@ -1,37 +1,46 @@
-# Nomos
+# Nomos — a programming language for legal reasoning
 
-> **νόμος** — _noun, Greek_. Law, custom, rule.
+> **νόμος** — Greek, _noun_. Law, custom, rule.
 
-**Nomos is an experimental programming language for legal reasoning.** Rules
-carry jurisdiction, date, and authority. LLMs bridge prose to typed facts at
-the edges. A defeasibility engine resolves conflicts the way judges do. Every
-output is a proof tree back to statutes and cases.
+**Nomos is an experimental programming language for encoding legal rules as
+code.** Write typed rules with jurisdiction and validity dates. Extract facts
+from prose via LLM calls that are first-class language primitives. Get
+verdicts with proof trees that trace back to statutes and cases.
 
-This is a **side project, built in public**. Not affiliated with any law firm,
-vendor, or bar association. Apache-2.0 licensed.
+Built on top of fifty years of rules-as-code research: Catala (Inria),
+OpenFisca (France), Blawx, Logical English (Kowalski), LegalRuleML, and the
+1981 British Nationality Act encoding.
 
-🌐 **[nomos-lang.dev](https://nomos.dashable.dev)** · 🕹 **[Playground](https://nomos.dashable.dev/play)**
+[![License](https://img.shields.io/badge/license-Apache%202.0-2D5016.svg)](./LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6.svg)](./tsconfig.base.json)
+[![Tests](https://img.shields.io/badge/tests-26%20passing-2D5016.svg)](./packages/core/test)
+[![Version](https://img.shields.io/badge/version-0.1.0-2D5016.svg)](./CHANGELOG.md)
+[![CUAD](https://img.shields.io/badge/CUAD-0.75%20contains%20%2F%200.97%20conf-2D5016.svg)](https://nomos.dashable.dev/research/benchmarks)
+
+**🌐 [nomos.dashable.dev](https://nomos.dashable.dev)** &nbsp;·&nbsp;
+**🕹 [Playground](https://nomos.dashable.dev/play)** &nbsp;·&nbsp;
+**🏛 [Architecture](https://nomos.dashable.dev/architecture)** &nbsp;·&nbsp;
+**📊 [Benchmarks](https://nomos.dashable.dev/research/benchmarks)** &nbsp;·&nbsp;
+**🔬 [Thesis](https://nomos.dashable.dev/research/thesis)**
 
 ---
 
-## Why another language?
+## Why Nomos exists
 
-The rules-as-code field has fifty years of history — Kowalski's British
-Nationality Act encoding (1981), Catala (Inria, 2021), OpenFisca (France,
-2011), Blawx, Logical English, LegalRuleML. Every attempt hit the same
-wall: the world keeps speaking in prose, and getting prose into rules at
-scale was impossible.
+Legal reasoning is already a computation. Statutes define predicates. Facts
+are inputs. Precedent is a priority ordering. Reforms are temporal updates.
+Logic programming knew this in the 1970s and hit a wall: the world keeps
+speaking in prose.
 
-LLMs changed that. Nomos's thesis: **put the LLM at the edge as a typed
-bridge, keep the interior deterministic and defeasible, and thread
-provenance through everything.** The four novelties:
+LLMs change what's possible — but only if you put them at the _edge_, not
+the center. Nomos's thesis: **LLMs as typed primitives at the language's
+border; deterministic defeasible logic inside; provenance threaded through
+every value.** Four things nothing else has together:
 
-1. **Typed LLM bridges** — `extract<Party>(pdf) using llm(…) verified_by human if confidence < 0.95` is a language primitive.
-2. **Time + jurisdiction, typed** — rules declare `@ FR from 2016-08-10`; queries run `as of` any date.
-3. **Defeasibility by design** — priority, specificity, recency. Conflicting rules resolved the way judges do.
-4. **Provenance, always** — every value carries authorities, facts used, and the rule chain that produced it.
-
-Built as a thin layer on top of existing OSS: [Eyecite](https://github.com/freelawproject/eyecite) for citations, [Concerto](https://github.com/accordproject/concerto) for types, [Akoma Ntoso](http://www.akomantoso.org/) for legislation, [Atticus Project](https://www.atticusprojectai.org/) datasets for evaluation, and the [Catala](https://catala-lang.org/) research program for inspiration.
+1. **Typed LLM bridges** — `extract<Party>(pdf) using llm(...) verified_by human if confidence < 0.95` is a language primitive, not library plumbing. The compiler derives a JSON schema from the target type and routes low-confidence extractions to a human queue.
+2. **Time + jurisdiction, typed** — rules declare `@ FR from 2016-08-10`; queries run `as of <date>`. The compiler refuses to apply a post-reform rule to a pre-reform fact.
+3. **Defeasibility by design** — priority → specificity (lex specialis) → recency (lex posterior) → declaration order. Every tiebreak is explained in the proof tree.
+4. **Provenance, always** — every value carries the authorities, facts, and rule chain that produced it. Ask the verdict _why_; get a tree back to statutes.
 
 ## Hello, Nomos
 
@@ -59,86 +68,230 @@ rule consumer_protection_override @ FR priority 100 defeats non_compete_enforcea
   authority: code_conso.art("L212-1")
 }
 
+fact party: Party = extract<Party>(contract_text) using llm("claude-sonnet-4-5")
+fact clause: NonCompete = extract<NonCompete>(contract_text, section: "non-compete")
+  using llm("claude-sonnet-4-5") verified_by human if confidence < 0.95
+
 query non_compete_enforceable as of 2026-04-18
 ```
 
-Given the same program and three different fact sets, Nomos returns:
+Run it:
 
-| Scenario             | Verdict             | Why                                                 |
-| -------------------- | ------------------- | --------------------------------------------------- |
-| Employee, fair terms | **ENFORCEABLE**     | Base rule satisfied; consumer override doesn't fire |
-| Consumer role        | **NOT ENFORCEABLE** | Priority-100 override defeats base rule             |
-| Employee, 12% comp   | **NOT ENFORCEABLE** | Base rule's `compensation_pct >= 0.30` fails        |
+```bash
+npx nomos run contract.nomos --with-llm --input facts.json
+```
 
-Every verdict comes with a proof tree naming the authorities, the facts used,
-and the rules defeated.
+Given the same program and different fact sets, Nomos returns:
 
-## Status
+| Scenario                       | Verdict            | Winning rule                   | Why                                    |
+| :----------------------------- | :----------------- | :----------------------------- | :------------------------------------- |
+| Employee, 18mo, 35% comp       | ✅ ENFORCEABLE     | `non_compete_enforceable`      | All requires pass, no override fires   |
+| Consumer role                  | ❌ NOT ENFORCEABLE | `consumer_protection_override` | Priority-100 defeater wins on priority |
+| Employee, 12% comp (underpaid) | ❌ NOT ENFORCEABLE | —                              | `compensation_pct >= 0.30` fails       |
 
-**v0.0.2 · In active development.** The compiler runs. The LLM bridge runs
-end-to-end. Defeasibility resolves priority, specificity, and recency.
-A CLI, a web playground, a VS Code extension, and a Claude Skill ship.
+Every verdict ships with a proof tree naming the authorities, the facts
+used, and the rules defeated.
 
-## Benchmarks
+**→ Try it live in your browser:** [nomos.dashable.dev/play](https://nomos.dashable.dev/play)
 
-First honest run on the [CUAD](https://www.atticusprojectai.org/cuad)
-dataset — 20 extractions, 4 categories, Claude Sonnet 4.5. Reproducible
-via `bench/cuad/harness.mjs`.
+## Benchmarks — honest CUAD numbers
 
-| Category       |  n  | Exact match | Contains |    F1    | Confidence |
-| :------------- | :-: | :---------: | :------: | :------: | :--------: |
-| Document Name  |  5  |    1.00     |   1.00   |   1.00   |    0.97    |
-| Parties        |  5  |    0.00     |   1.00   |   0.20   |    0.96    |
-| Effective Date |  5  |    0.20     |   0.40   |   0.45   |    0.99    |
-| Governing Law  |  5  |    0.60     |   0.60   |   1.00   |    0.99    |
-| **Overall**    | 20  |  **0.45**   | **0.75** | **0.66** |  **0.97**  |
+First public run on the [CUAD dataset](https://www.atticusprojectai.org/cuad)
+(Atticus Project, 20,910 Q/A pairs across 510 commercial contracts).
+Model: `anthropic/claude-sonnet-4.5`. Reproduce: `node bench/cuad/harness.mjs`.
 
-Parties and dates are the gap — the model extracts semantically correct
-but verbose spans (containment 100% on Parties; F1 only 0.20). Schema
-discipline + category-specific types close most of that. Full writeup:
-[/research/benchmarks](https://nomos.dashable.dev/research/benchmarks).
+| Category       |   n | Exact match | Contains |       F1 | Confidence |
+| :------------- | --: | ----------: | -------: | -------: | ---------: |
+| Document Name  |   5 |        1.00 |     1.00 |     1.00 |       0.97 |
+| Parties        |   5 |        0.00 |     1.00 |     0.20 |       0.96 |
+| Effective Date |   5 |        0.20 |     0.40 |     0.45 |       0.99 |
+| Governing Law  |   5 |        0.60 |     0.60 |     1.00 |       0.99 |
+| **Overall**    |  20 |    **0.45** | **0.75** | **0.66** |   **0.97** |
 
-See [`tasks/todo.md`](./tasks/todo.md) for the full plan.
+Schema discipline closes most of the Parties / Date gap. Full writeup:
+[nomos.dashable.dev/research/benchmarks](https://nomos.dashable.dev/research/benchmarks).
 
 ## Quickstart
 
-Requires **Node ≥ 20**.
+Requires **Node ≥ 20**. Optional: Python 3 + `pip install eyecite` for US citation resolution.
 
 ```bash
 git clone https://github.com/sboghossian/nomos.git
 cd nomos
 npm install
-npx tsc -b packages/core packages/cli
+npm run build
 
-# Run the flagship example
+# Run an example (auto-detects sibling .input.json)
 npx nomos run packages/core/test/fixtures/non_compete_fr.nomos
 
-# Or try the browser playground
-npm run web   # http://localhost:4325/play
+# Or the LLM-powered version (needs OPENROUTER_API_KEY)
+echo "OPENROUTER_API_KEY=sk-or-..." > .env
+npx nomos run packages/core/test/fixtures/non_compete_llm.nomos --with-llm
+
+# Resolve US citations through Eyecite
+npx nomos resolve packages/core/test/fixtures/us_equal_protection.nomos
+
+# Serve the website + playground locally
+npm run web    # http://localhost:4325/play
 ```
+
+## The language
+
+### Types
+
+```nomos
+type Party {
+  name: String
+  role: "seller" | "buyer" | "employee" | "employer" | "consumer"
+}
+type NonCompete {
+  duration: Duration       // integer months
+  scope: Geography         // { region: String, reasonable: Boolean }
+  compensation_pct: Float
+}
+```
+
+### Rules — with jurisdiction, validity, priority, defeats, guards
+
+```nomos
+rule non_compete_enforceable @ FR from 2016-08-10 {
+  requires clause.duration <= 24
+  requires clause.scope is reasonable
+  authority: code_du_travail.art("L1121-1")
+}
+
+rule consumer_protection_override
+  @ FR priority 100
+  defeats non_compete_enforceable
+  when party.role == "consumer"
+{
+  authority: code_conso.art("L212-1")
+}
+```
+
+### Facts — plain values or LLM-extracted
+
+```nomos
+fact party: Party = extract<Party>(contract_text)
+  using llm("claude-sonnet-4-5")
+  verified_by human if confidence < 0.95
+```
+
+### Queries — pinned to a date
+
+```nomos
+query non_compete_enforceable as of 2026-04-18
+```
+
+### Defeasibility — the tiebreaker chain
+
+When multiple rules fire, Nomos resolves in this order:
+
+1. **Priority** — explicit `priority N`. Higher wins.
+2. **Specificity** (_lex specialis_) — score = `requires + 2·when + defeats`. Higher wins.
+3. **Recency** (_lex posterior_) — later `from` date wins.
+4. **Declaration order** — last declared wins. Final fallback.
+
+Every tiebreak is recorded in `result.tiebreaker` with a human-readable
+summary.
 
 ## Packages
 
-| Package                          | Description                                                         |
-| -------------------------------- | ------------------------------------------------------------------- |
-| [`@nomos/core`](./packages/core) | Parser, type checker, evaluator, defeasibility engine               |
-| [`@nomos/cli`](./packages/cli)   | The `nomos` command-line tool                                       |
-| [`@nomos/web`](./apps/web)       | Website + playground ([nomos-lang.dev](https://nomos.dashable.dev)) |
+| Package                                        | Description                                                                                          |
+| :--------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
+| [`@nomos/core`](./packages/core)               | Lexer, parser, typed AST, evaluator, defeasibility solver                                            |
+| [`@nomos/llm`](./packages/llm)                 | OpenRouter bridge for `extract<T>`                                                                   |
+| [`@nomos/citations`](./packages/citations)     | Eyecite integration (US case law)                                                                    |
+| [`@nomos/cli`](./packages/cli)                 | `nomos` command-line tool — `run`, `parse`, `check`, `resolve`                                       |
+| [`nomos-vscode`](./packages/vscode)            | VS Code extension with LSP (syntax, hover, diagnostics, completion)                                  |
+| [`@nomos/web`](./apps/web)                     | Website + browser playground at [nomos.dashable.dev](https://nomos.dashable.dev)                     |
+| [`@nomos/api`](./apps/api)                     | Proxy server that holds the OpenRouter key for the playground                                        |
+| [`skills/nomos-reason`](./skills/nomos-reason) | Claude Skill for [Lawvable's awesome-legal-skills](https://github.com/lawvable/awesome-legal-skills) |
 
-## Prior art worth studying
+## How it compares
 
-- **[Catala](https://catala-lang.org/)** — the closest modern academic ancestor. Default logic first-class. Inria, Apache-2.0.
-- **[OpenFisca](https://openfisca.org/)** — tax/benefit law as Python, adopted by multiple governments.
-- **[Blawx](https://app.blawx.dev/)** — visual rules-as-code over s(CASP), by Jason Morris / Lexpedite.
-- **Kowalski et al.** — the 1981 British Nationality Act encoding. Won the CodeX Prize in 2021.
+| System                                            | Paradigm                      |   LLM bridge   |            Defeasibility            |   Temporal types    | License    |
+| :------------------------------------------------ | :---------------------------- | :------------: | :---------------------------------: | :-----------------: | :--------- |
+| **Nomos**                                         | Typed functional + defeasible | ✅ first-class | ✅ priority + specialis + posterior | ✅ `from` / `as of` | Apache-2.0 |
+| [Catala](https://catala-lang.org/)                | Functional + default logic    |       ❌       |          ✅ default logic           |       partial       | Apache-2.0 |
+| [OpenFisca](https://openfisca.org/)               | Python library                |       ❌       |                 ❌                  |         ❌          | AGPL       |
+| [Blawx](https://app.blawx.dev/)                   | Visual → s(CASP)              |       ❌       |             ✅ via ASP              |         ❌          | MIT        |
+| [Logical English](https://www.doc.ic.ac.uk/~rak/) | Controlled NL → Prolog        |       ❌       |               partial               |         ❌          | research   |
+| LangGraph / LangChain                             | Agent orchestration           |  ✅ (untyped)  |                 ❌                  |         ❌          | MIT        |
 
-See [`/research/prior-art`](./docs/research/prior-art.md) _(coming soon)_ for the full survey.
+See the full survey at [/research/prior-art](https://nomos.dashable.dev/research/prior-art).
+
+## Use cases (and non-cases)
+
+### Good fits
+
+- Encoding statutes or contracts whose logic needs to be auditable
+- Legal-AI agents that must cite their sources
+- Compliance rule engines that need temporal + jurisdictional correctness
+- Any workflow where an LLM extracts structured data and typed rules reason over it
+
+### Not fits (yet)
+
+- Production legal advice — this is experimental v0; always verify with counsel
+- Jurisdictions with no declared rules — the language doesn't know law it hasn't been told
+- Heavy natural-language reasoning tasks — LLMs stay at the edge, not inside the reasoning engine
+- Real-time systems with strict latency budgets — LLM extraction is 2–5s per fact
+
+## Status & roadmap
+
+**v0.1.0** — first public release. See [CHANGELOG.md](./CHANGELOG.md) for the
+full list.
+
+Coming next:
+
+- Specificity + semantic scoring (currently structural only)
+- Akoma Ntoso legislation import
+- Docassemble output adapter — Nomos program → guided interview
+- Rule-pack marketplace (`nomos install @nomos/fr-labour`)
+- Full CUAD + MAUD + ACORD benchmark sweep
+
+Track: [GitHub issues](https://github.com/sboghossian/nomos/issues) · [Changelog](https://nomos.dashable.dev/changelog) · [Roadmap ideas](./tasks/todo.md)
 
 ## Contributing
 
-This is an early-stage side project. Issues, discussions, and exploratory PRs
-welcome. Breaking changes expected while v0 shapes itself.
+Issues, discussions, and exploratory PRs welcome. Breaking changes expected
+during v0. See [CONTRIBUTING.md](./CONTRIBUTING.md) (coming soon) for the
+dev loop.
+
+Key commands:
+
+```bash
+npm install           # set up workspace
+npm test              # run 26 Vitest specs
+npm run build         # build all packages
+npm run web           # serve the site locally
+```
+
+## Citations & credit
+
+If you reference Nomos, please credit the prior work it stands on:
+
+- **Catala** — Merigoux, Chataing, Protzenko (2021). _Catala: a programming language for the law._ ICFP.
+- **British Nationality Act** — Sergot, Sadri, Kowalski, Kriwaczek, Hammond, Cory (1986). _The British Nationality Act as a logic program._ Communications of the ACM. CodeX Prize 2021.
+- **CUAD** — Hendrycks, Burns, Chen, Ball (2021). _CUAD: An Expert-Annotated NLP Dataset for Legal Contract Review._ NeurIPS.
+- **Eyecite** — Free Law Project. [github.com/freelawproject/eyecite](https://github.com/freelawproject/eyecite).
+
+Full prior-art survey: [nomos.dashable.dev/research/prior-art](https://nomos.dashable.dev/research/prior-art).
+
+## Disclaimer
+
+Nomos is an experimental side project. It is not legal advice, not
+production software, and not a substitute for qualified counsel. Every
+verdict depends entirely on the rules and facts the user supplies.
+Always consult a licensed attorney for actual legal matters.
 
 ## License
 
-Apache-2.0 © 2026 Stephane Boghossian.
+[Apache-2.0](./LICENSE) © 2026 Stephane Boghossian.
+
+---
+
+**Keywords**: programming language, legal reasoning, rules-as-code,
+defeasible logic, LLM, typed extraction, legal AI, compliance, contract
+analysis, Catala alternative, OpenFisca alternative, legal tech, TypeScript,
+Apache-2.0, open source, experimental.

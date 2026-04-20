@@ -78,42 +78,112 @@ const stack = [
 
   <!-- ─────────── Hero ─────────── -->
   <section class="max-w-wide mx-auto px-6 md:px-10 pt-20 md:pt-28 pb-24 md:pb-32">
-    <div class="flex items-center gap-3 mb-8">
-      <span class="chip">v0.0.1 · In development</span>
-      <span class="chip">Apache-2.0</span>
-      <span class="chip">TypeScript</span>
-    </div>
+    <div class="grid lg:grid-cols-[1.1fr_1fr] gap-x-16 gap-y-12 items-start">
+      <!-- Left: tagline + CTA -->
+      <div class="reveal">
+        <div class="flex items-center gap-2 mb-8 flex-wrap">
+          <span class="chip chip-accent">v0.1.0 · first public release</span>
+          <span class="chip">Apache-2.0</span>
+          <span class="chip">TypeScript</span>
+        </div>
 
-    <h1 class="max-w-[22ch]">
-      A programming language for
-      <em class="italic text-accent" style="font-feature-settings:'ss01'">legal reasoning.</em>
-    </h1>
+        <h1 class="max-w-[20ch]">
+          A programming language for
+          <em class="italic text-accent" style="font-feature-settings:'ss01'">legal reasoning.</em>
+        </h1>
 
-    <p class="mt-8 text-xl md:text-2xl max-w-prose text-sub font-serif" style="font-weight:400; line-height:1.45;">
-      Rules carry jurisdiction, date, and authority. LLMs bridge prose to typed facts at the edges.
-      A defeasibility engine resolves conflicts the way judges do. Every output is a proof tree
-      back to statutes and cases.
-    </p>
+        <p class="mt-8 text-xl md:text-2xl max-w-prose text-sub font-serif" style="font-weight:400; line-height:1.45;">
+          Rules carry jurisdiction, date, and authority. LLMs bridge prose to typed facts at the edges.
+          A defeasibility engine resolves conflicts the way judges do. Every output is a proof tree
+          back to statutes and cases.
+        </p>
 
-    <div class="mt-12 flex flex-wrap gap-3 items-center">
-      <a
-        href="https://github.com/sboghossian/nomos"
-        class="inline-block no-underline bg-ink text-cream px-5 py-3 text-[14px] font-medium hover:bg-accent transition-colors link-arrow">
-        Read the source
-      </a>
-      <a
-        href="#language"
-        class="inline-block no-underline border border-ink px-5 py-3 text-[14px] font-medium hover:bg-ink hover:text-cream transition-colors">
-        See the language
-      </a>
-      <span class="text-[13px] text-mute ml-2 hidden md:inline">
-        <span class="kbd">npm create nomos@latest</span>
-        <span class="opacity-50">· aspirational, week 6</span>
-      </span>
+        <div class="mt-10 flex flex-wrap gap-3 items-center">
+          <a
+            href="/play"
+            class="inline-block no-underline bg-ink text-cream px-5 py-3 text-[14px] font-medium hover:bg-accent transition-all hover:-translate-y-0.5 link-arrow">
+            Try the playground
+          </a>
+          <a
+            href="https://github.com/sboghossian/nomos"
+            target="_blank"
+            class="inline-block no-underline border border-ink px-5 py-3 text-[14px] font-medium hover:bg-ink hover:text-cream transition-all hover:-translate-y-0.5">
+            Read the source ↗
+          </a>
+        </div>
+
+        <p class="mt-6 text-[13px] text-mute">
+          No install. No signup. Edit rules + facts in your browser.
+        </p>
+      </div>
+
+      <!-- Right: live animated verdict demo -->
+      <div class="reveal reveal-delayed">
+        <div class="border border-rule bg-white shadow-[0_4px_20px_-8px_rgba(45,80,22,0.15)]">
+          <!-- header -->
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-rule bg-cream/50">
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+              Live · non_compete_enforceable
+            </span>
+            <div class="flex items-center gap-1.5">
+              <span id="live-dot" class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
+              <span class="font-mono text-[11px] text-accent">running</span>
+            </div>
+          </div>
+
+          <!-- scenario label -->
+          <div class="px-5 pt-5 pb-2">
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+              Scenario
+            </span>
+            <p id="live-scenario" class="mt-1 font-serif text-lg transition-all duration-300 ease-out" style="font-weight:500">
+              Employee · fair terms
+            </p>
+          </div>
+
+          <!-- verdict -->
+          <div class="px-5 py-4 border-y border-rule">
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+              Verdict
+            </span>
+            <p id="live-verdict" class="mt-1 font-serif text-4xl md:text-5xl transition-all duration-300 ease-out" style="font-weight:500">
+              —
+            </p>
+            <p id="live-rule" class="mt-2 text-[13px] text-sub font-mono transition-all duration-300 ease-out">
+              winning rule: <span class="text-accent">—</span>
+            </p>
+          </div>
+
+          <!-- proof chain -->
+          <div class="px-5 py-4">
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">
+              Proof chain
+            </span>
+            <ul id="live-proof" class="mt-2 space-y-1 text-[13px] font-mono text-ink">
+              <li>&nbsp;</li>
+            </ul>
+          </div>
+
+          <!-- tiebreaker footer -->
+          <div id="live-tb" class="px-5 py-3 border-t border-rule bg-accent-bg/40 hidden">
+            <p class="text-[12px] text-accent italic font-serif">
+              <span class="not-italic font-mono font-normal text-[10px] uppercase tracking-[0.14em] text-mute mr-2">Tiebreaker</span>
+              <span id="live-tb-text"></span>
+            </p>
+          </div>
+        </div>
+
+        <!-- scenario pager -->
+        <div class="mt-4 flex items-center justify-center gap-2">
+          <button data-scn="0" class="scn-btn w-2 h-2 rounded-full bg-ink transition-all" aria-label="Scenario 1"></button>
+          <button data-scn="1" class="scn-btn w-2 h-2 rounded-full bg-rule transition-all" aria-label="Scenario 2"></button>
+          <button data-scn="2" class="scn-btn w-2 h-2 rounded-full bg-rule transition-all" aria-label="Scenario 3"></button>
+        </div>
+      </div>
     </div>
 
     <!-- Etymology / definition block -->
-    <div class="mt-20 md:mt-28 border-t border-rule pt-8 grid md:grid-cols-[auto_1fr] gap-x-10 gap-y-3 max-w-3xl">
+    <div class="reveal mt-24 md:mt-32 border-t border-rule pt-8 grid md:grid-cols-[auto_1fr] gap-x-10 gap-y-3 max-w-3xl">
       <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute pt-1">Noun · Greek</span>
       <div>
         <p class="font-serif text-ink text-xl leading-snug" style="font-weight:500">
@@ -129,7 +199,7 @@ const stack = [
   </section>
 
   <!-- ─────────── Thesis ─────────── -->
-  <section id="thesis" class="rule-top bg-white">
+  <section id="thesis" class="rule-top bg-white reveal">
     <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28 grid md:grid-cols-[220px_1fr] gap-10">
       <div>
         <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 01 — Thesis</span>
@@ -160,7 +230,7 @@ const stack = [
   </section>
 
   <!-- ─────────── Language ─────────── -->
-  <section id="language" class="rule-top">
+  <section id="language" class="rule-top reveal">
     <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
       <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-10">
         <div>
@@ -207,7 +277,7 @@ const stack = [
   </section>
 
   <!-- ─────────── Pillars ─────────── -->
-  <section id="pillars" class="rule-top bg-white">
+  <section id="pillars" class="rule-top bg-white reveal">
     <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
       <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-16">
         <div>
@@ -280,7 +350,7 @@ const stack = [
   </section>
 
   <!-- ─────────── Stack ─────────── -->
-  <section id="stack" class="rule-top">
+  <section id="stack" class="rule-top reveal">
     <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
       <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-12">
         <div>
@@ -315,7 +385,7 @@ const stack = [
   </section>
 
   <!-- ─────────── Prior art ─────────── -->
-  <section id="prior" class="rule-top bg-white">
+  <section id="prior" class="rule-top bg-white reveal">
     <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
       <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-12">
         <div>
@@ -346,7 +416,7 @@ const stack = [
   </section>
 
   <!-- ─────────── Closing call ─────────── -->
-  <section class="rule-top">
+  <section class="rule-top reveal">
     <div class="max-w-wide mx-auto px-6 md:px-10 py-24 md:py-32 text-center">
       <h2 class="font-serif text-4xl md:text-5xl max-w-[28ch] mx-auto" style="font-weight:500">
         Code the law.
@@ -410,3 +480,155 @@ const stack = [
     </div>
   </footer>
 </Layout>
+
+<!-- ───────────── Live verdict demo + scroll reveal ───────────── -->
+<script>
+  // Scenarios are hard-coded — they match the /play playground's presets.
+  const scenarios = [
+    {
+      label: 'Employee · fair terms',
+      verdict: 'ENFORCEABLE',
+      verdictClass: 'text-accent',
+      rule: 'non_compete_enforceable',
+      proof: [
+        ['✓', 'clause.duration <= 24', 'true'],
+        ['✓', 'clause.scope is reasonable', 'true'],
+        ['✓', 'clause.compensation_pct >= 0.30', 'true'],
+      ],
+      tiebreaker: null,
+    },
+    {
+      label: 'Consumer role · override fires',
+      verdict: 'NOT ENFORCEABLE',
+      verdictClass: 'text-red-700',
+      rule: 'consumer_protection_override',
+      proof: [
+        ['✓', 'non_compete_enforceable', 'satisfied'],
+        ['✓', 'consumer_protection_override', 'satisfied'],
+        ['⚖', 'defeated: non_compete_enforceable', ''],
+      ],
+      tiebreaker:
+        'decided by priority — consumer_protection_override (100) beats non_compete_enforceable (0).',
+    },
+    {
+      label: 'Underpaid (12%) · base rule fails',
+      verdict: 'NOT ENFORCEABLE',
+      verdictClass: 'text-red-700',
+      rule: '— (no rule fired)',
+      proof: [
+        ['✓', 'clause.duration <= 24', 'true'],
+        ['✓', 'clause.scope is reasonable', 'true'],
+        ['✗', 'clause.compensation_pct >= 0.30', 'false'],
+      ],
+      tiebreaker: null,
+    },
+  ];
+
+  const $ = (id: string) => document.getElementById(id);
+  const scenarioEl = $('live-scenario');
+  const verdictEl = $('live-verdict');
+  const ruleEl = $('live-rule');
+  const proofEl = $('live-proof');
+  const tbEl = $('live-tb');
+  const tbTextEl = $('live-tb-text');
+  const dots = Array.from(
+    document.querySelectorAll<HTMLButtonElement>('.scn-btn'),
+  );
+
+  let current = 0;
+  let timer: number | undefined;
+  let paused = false;
+
+  function render(i: number) {
+    const s = scenarios[i];
+    if (!s) return;
+
+    // subtle fade transition
+    const box = [scenarioEl, verdictEl, ruleEl, proofEl];
+    box.forEach((el) => el && (el.style.opacity = '0'));
+
+    setTimeout(() => {
+      if (scenarioEl) scenarioEl.textContent = s.label;
+      if (verdictEl) {
+        verdictEl.textContent = s.verdict;
+        verdictEl.className =
+          'mt-1 font-serif text-4xl md:text-5xl transition-all duration-300 ease-out ' +
+          s.verdictClass;
+      }
+      if (ruleEl) {
+        ruleEl.innerHTML =
+          'winning rule: <span class="text-accent">' + s.rule + '</span>';
+      }
+      if (proofEl) {
+        proofEl.innerHTML = s.proof
+          .map(([icon, clause, value]) => {
+            const color =
+              icon === '✓'
+                ? 'text-accent'
+                : icon === '✗'
+                  ? 'text-red-700'
+                  : 'text-yellow-700';
+            const val = value
+              ? '<span class="text-mute"> → ' + value + '</span>'
+              : '';
+            return (
+              '<li><span class="' +
+              color +
+              ' mr-2">' +
+              icon +
+              '</span>' +
+              clause +
+              val +
+              '</li>'
+            );
+          })
+          .join('');
+      }
+      if (s.tiebreaker && tbEl && tbTextEl) {
+        tbEl.classList.remove('hidden');
+        tbTextEl.textContent = s.tiebreaker;
+      } else {
+        tbEl?.classList.add('hidden');
+      }
+      box.forEach((el) => el && (el.style.opacity = '1'));
+    }, 200);
+
+    dots.forEach((d, j) => {
+      d.className =
+        'scn-btn w-2 h-2 rounded-full transition-all ' +
+        (j === i ? 'bg-ink scale-125' : 'bg-rule');
+    });
+  }
+
+  function next() {
+    if (paused) return;
+    current = (current + 1) % scenarios.length;
+    render(current);
+  }
+
+  function schedule() {
+    if (timer) window.clearTimeout(timer);
+    timer = window.setTimeout(next, 3600);
+  }
+
+  function loop() {
+    schedule();
+  }
+
+  // initial render
+  render(0);
+
+  // cycle
+  setInterval(loop, 3600);
+
+  // let users pin a scenario by clicking a dot (pauses auto-cycle)
+  dots.forEach((d, i) => {
+    d.addEventListener('click', () => {
+      paused = true;
+      current = i;
+      render(i);
+    });
+  });
+
+  // Scroll reveal is handled globally in Layout.astro.
+</script>

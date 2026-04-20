@@ -1,15 +1,25 @@
 ---
-import '../styles/global.css';
+import "../styles/global.css";
 
 interface Props {
   title?: string;
   description?: string;
+  /** OG image path; defaults to the Nomos social preview. */
+  image?: string;
+  /** Canonical URL override. */
+  canonical?: string;
 }
 
 const {
-  title = 'Nomos — a programming language for legal reasoning',
-  description = 'Typed rules, defeasible logic, LLM bridges, and proof trees back to statutes. Built on Eyecite, Concerto, Akoma Ntoso, and decades of rules-as-code research.',
+  title = "Nomos — a programming language for legal reasoning",
+  description = "Encode legal rules as typed code with jurisdiction, validity dates, LLM-powered fact extraction, defeasible conflict resolution, and proof trees that cite statutes and cases. Experimental, open source, Apache-2.0.",
+  image = "/og.png",
+  canonical,
 } = Astro.props;
+
+const site = "https://nomos.dashable.dev";
+const url = canonical ?? new URL(Astro.url.pathname, site).toString();
+const absImage = image.startsWith("http") ? image : `${site}${image}`;
 ---
 
 <!doctype html>
@@ -19,11 +29,26 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
+    <meta name="author" content="Stephane Boghossian" />
+    <meta
+      name="keywords"
+      content="programming language, legal reasoning, rules-as-code, defeasible logic, LLM, Claude, OpenRouter, legal AI, contract analysis, compliance, Catala, OpenFisca, Eyecite, TypeScript, open source, Apache-2.0"
+    />
 
+    <!-- Canonical -->
+    <link rel="canonical" href={url} />
+
+    <!-- Open Graph / Twitter -->
+    <meta property="og:site_name" content="Nomos" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content={url} />
+    <meta property="og:image" content={absImage} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={absImage} />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
@@ -34,9 +59,49 @@ const {
       rel="stylesheet"
     />
 
+    <!-- JSON-LD: marks Nomos as a SoftwareApplication for rich search results. -->
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: "Nomos",
+        applicationCategory: "DeveloperApplication",
+        operatingSystem: "macOS, Linux, Windows",
+        description:
+          "An experimental programming language for legal reasoning — typed rules, defeasible logic, LLM-powered fact extraction, proof trees.",
+        url: site,
+        author: {
+          "@type": "Person",
+          name: "Stephane Boghossian",
+          url: "https://github.com/sboghossian",
+        },
+        license: "https://www.apache.org/licenses/LICENSE-2.0",
+        codeRepository: "https://github.com/sboghossian/nomos",
+        programmingLanguage: "TypeScript",
+        softwareVersion: "0.1.0",
+      })}
+    />
+
     <title>{title}</title>
   </head>
   <body>
     <slot />
+
+    <!-- Universal scroll-reveal: any element with class="reveal" fades in. -->
+    <script>
+      const io = new IntersectionObserver(
+        (entries, observer) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              e.target.classList.add("revealed");
+              observer.unobserve(e.target);
+            }
+          }
+        },
+        { threshold: 0.08, rootMargin: "0px 0px -40px 0px" },
+      );
+      document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    </script>
   </body>
 </html>
