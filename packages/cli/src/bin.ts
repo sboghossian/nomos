@@ -16,6 +16,11 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse, check, evaluate, envFromJson, prettyPrint } from "@nomos/core";
 import { resolveFacts } from "@nomos/llm";
+import {
+  resolveAuthorities,
+  isResolverAvailable,
+  shutdown as shutdownCitations,
+} from "@nomos/citations";
 import { bold, cyan, dim, green, red, yellow, gray } from "./tty.js";
 import { renderDiagnostics, renderResult } from "./render.js";
 
@@ -29,6 +34,7 @@ function usage(): string {
     `  ${cyan("nomos run")}   <file.nomos> [--input <file.json>] [--as-of <YYYY-MM-DD>]`,
     `  ${cyan("nomos parse")} <file.nomos>`,
     `  ${cyan("nomos check")} <file.nomos>`,
+    `  ${cyan("nomos resolve")} <file.nomos>   ${dim("— resolve authorities via Eyecite")}`,
     `  ${cyan("nomos help")}`,
     `  ${cyan("nomos version")}`,
     "",
@@ -104,6 +110,52 @@ function runParse(file: string): void {
     process.exit(1);
   }
   console.log(prettyPrint(parsed.ast!));
+}
+
+async function runResolve(file: string): Promise<void> {
+  const { src } = loadSource(file);
+  const parsed = parse(src);
+  if (parsed.lexErrors.length + parsed.parseErrors.length > 0) {
+    const diags = [
+      ...parsed.lexErrors.map((e) => ({ severity: "error" as const, ...e })),
+      ...parsed.parseErrors.map((e) => ({ severity: "error" as const, ...e })),
+    ];
+    console.error(renderDiagnostics(diags, "PARSE ERRORS"));
+    process.exit(1);
+  }
+
+  const program = parsed.ast!;
+  const refs = program.declarations.flatMap((d) =>
+    d.kind === "RuleDecl" ? d.authorities : [],
+  );
+  if (refs.length === 0) {
+    console.log(dim("no authorities to resolve"));
+    return;
+  }
+
+  const available = await isResolverAvailable();
+  if (!available) {
+    console.error(
+      yellow("warn: ") +
+        "eyecite unavailable (install with: pip3 install eyecite)",
+    );
+  }
+
+  const resolutions = await resolveAuthorities(refs);
+
+  console.log(dim("─── AUTHORITIES ─").padEnd(64, "─"));
+  for (const r of resolutions) {
+    const icon = r.resolved ? green("✓") : gray("○");
+    const reporter = r.reporter ? `  ${dim("reporter")} ${r.reporter}` : "";
+    const year = r.year ? `  ${dim("year")} ${r.year}` : "";
+    console.log(
+      `  ${icon} ${bold(r.ref.canonical)}  ${gray("via " + r.resolver)}${reporter}${year}`,
+    );
+    if (!r.resolved) {
+      console.log(`      ${gray("note:")} ${r.note}`);
+    }
+  }
+  shutdownCitations();
 }
 
 function runCheck(file: string): void {
@@ -330,6 +382,14 @@ switch (cmd) {
   case "check":
     if (!positional[0]) fail("nomos check needs a file");
     runCheck(positional[0]);
+    break;
+
+  case "resolve":
+    if (!positional[0]) fail("nomos resolve needs a file");
+    runResolve(positional[0]).catch((err: Error) => {
+      console.error(red("error: ") + err.message);
+      process.exit(1);
+    });
     break;
 
   case "run":

@@ -16,6 +16,7 @@
     "dev": "tsc -p tsconfig.json --watch"
   },
   "dependencies": {
+    "@nomos/citations": "0.0.1",
     "@nomos/core": "0.0.1",
     "@nomos/llm": "0.0.1"
   },

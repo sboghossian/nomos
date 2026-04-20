@@ -1,0 +1,12 @@
+// US equal-protection rule — illustrates citations that Eyecite can resolve.
+
+rule segregation_unconstitutional @ US from 1954-05-17 {
+  requires context.involves_state_action
+  requires context.separates_by_race
+  authority: scotus(1954-05-17, "347 U.S. 483")
+  authority: us.art("§ 1983")
+}
+
+fact context: Record = record
+
+query segregation_unconstitutional as of 2026-04-18
