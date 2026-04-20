@@ -2,7 +2,7 @@
   "name": "nomos-vscode",
   "displayName": "Nomos",
   "description": "Syntax highlighting, diagnostics, and hovers for the Nomos legal-reasoning language.",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "sboghossian",
   "license": "Apache-2.0",
   "repository": {
@@ -63,7 +63,7 @@
     "package": "vsce package"
   },
   "dependencies": {
-    "@nomos/core": "0.0.1",
+    "@nomos/core": "0.1.0",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12"

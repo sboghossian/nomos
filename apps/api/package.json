@@ -1,6 +1,6 @@
 {
   "name": "@nomos/api",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "Tiny HTTP proxy for the Nomos playground: forwards extract<T> calls to OpenRouter with rate limiting.",
   "license": "Apache-2.0",
@@ -11,8 +11,8 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "@nomos/core": "0.0.1",
-    "@nomos/llm": "0.0.1"
+    "@nomos/core": "0.1.0",
+    "@nomos/llm": "0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

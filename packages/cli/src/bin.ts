@@ -24,7 +24,7 @@ import {
 import { bold, cyan, dim, green, red, yellow, gray } from "./tty.js";
 import { renderDiagnostics, renderResult } from "./render.js";
 
-const VERSION = "0.0.1";
+const VERSION = "0.1.0";
 
 function usage(): string {
   return [

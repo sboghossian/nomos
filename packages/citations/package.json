@@ -1,6 +1,6 @@
 {
   "name": "@nomos/citations",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Citation resolver for Nomos — wraps Eyecite for US citations; pass-through for other jurisdictions.",
   "license": "Apache-2.0",
   "type": "module",
@@ -22,7 +22,7 @@
     "dev": "tsc -p tsconfig.json --watch"
   },
   "dependencies": {
-    "@nomos/core": "0.0.1"
+    "@nomos/core": "0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

@@ -4,6 +4,23 @@ import Nav from '../components/Nav.astro';
 
 const entries = [
   {
+    version: 'v0.1.0',
+    date: '2026-04-18',
+    title: 'First public release. The whole thesis — parse, LLM bridge, defeasibility, proof tree, benchmarks — runs end-to-end.',
+    highlights: [
+      'Full defeasibility: priority → specificity (lex specialis) → recency (lex posterior) → declaration order, with tiebreaker explanation',
+      'Typed AuthorityRef AST — authorities classified as article / case / section / decree / generic with canonical strings',
+      '@nomos/citations: Eyecite (Free Law Project) integration via Python subprocess; nomos resolve resolves US citations',
+      'VS Code extension: TextMate grammar + LSP with diagnostics, hover, completion',
+      'CUAD benchmark: 20 extractions, 4 categories, Claude Sonnet 4.5 — 0.45 EM / 0.75 contains / 0.66 F1 / 0.97 conf. Published at /research/benchmarks',
+      'Claude Skill (skills/nomos-reason) ready for Lawvable submission',
+      '26 Vitest specs pin grammar + evaluator behavior',
+      'apps/api daemonized via launchd (auto-respawn)',
+      'New page /research/benchmarks with reproducible numbers',
+    ],
+    commit: 'v0.1.0 — git tag v0.1.0',
+  },
+  {
     version: 'v0.0.2',
     date: '2026-04-18',
     title: 'LLM bridge lands. extract<T> runs end-to-end.',
