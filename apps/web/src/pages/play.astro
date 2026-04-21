@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Footer from '../components/Footer.astro';
 
 const defaultSource = `// A French non-compete clause, reasoned about as of 2026-04-18.
 
@@ -195,12 +196,7 @@ const scenarios = [
     </div>
   </section>
 
-  <footer class="rule-top">
-    <div class="max-w-wide mx-auto px-6 md:px-10 py-8 flex items-center justify-between text-[12px] text-mute">
-      <span>νόμος · running entirely in your browser. No data leaves this page.</span>
-      <a href="https://github.com/sboghossian/nomos" class="no-underline hover:text-ink">GitHub ↗</a>
-    </div>
-  </footer>
+  <Footer edit="apps/web/src/pages/play.astro" />
 </Layout>
 
 <!-- ─────────── Runtime ─────────── -->

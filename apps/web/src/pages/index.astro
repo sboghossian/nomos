@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
 
 const nomosExample = `// A French non-compete clause, reasoned about as of 2026-04-18.
 
@@ -443,42 +444,7 @@ const stack = [
   </section>
 
   <!-- ─────────── Footer ─────────── -->
-  <footer class="rule-top bg-white">
-    <div class="max-w-wide mx-auto px-6 md:px-10 py-10 grid md:grid-cols-3 gap-8 text-[13px]">
-      <div>
-        <div class="flex items-baseline gap-2 mb-3">
-          <span class="font-serif text-lg text-accent" style="font-weight:500">ν</span>
-          <span class="font-serif text-lg" style="font-weight:500">Nomos</span>
-        </div>
-        <p class="text-mute max-w-[40ch]">
-          A programming language for legal reasoning. Apache-2.0.
-          Not affiliated with any law firm, vendor, or bar association.
-        </p>
-      </div>
-
-      <div class="flex flex-col gap-2">
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute mb-1">Project</span>
-        <a href="https://github.com/sboghossian/nomos" class="no-underline text-sub hover:text-ink">GitHub</a>
-        <a href="#" class="no-underline text-sub hover:text-ink">Docs</a>
-        <a href="#" class="no-underline text-sub hover:text-ink">Playground</a>
-        <a href="#" class="no-underline text-sub hover:text-ink">Changelog</a>
-      </div>
-
-      <div class="flex flex-col gap-2">
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute mb-1">Credit where due</span>
-        <a href="https://catala-lang.org/" class="no-underline text-sub hover:text-ink">Catala — Inria</a>
-        <a href="https://openfisca.org/" class="no-underline text-sub hover:text-ink">OpenFisca</a>
-        <a href="https://free.law/" class="no-underline text-sub hover:text-ink">Free Law Project</a>
-        <a href="https://www.atticusprojectai.org/" class="no-underline text-sub hover:text-ink">Atticus Project</a>
-      </div>
-    </div>
-    <div class="border-t border-rule">
-      <div class="max-w-wide mx-auto px-6 md:px-10 py-5 flex items-center justify-between text-[12px] text-mute">
-        <span>© 2026 · A side project by Stephane Boghossian.</span>
-        <span class="font-mono">νόμος · nómos · nomos</span>
-      </div>
-    </div>
-  </footer>
+  <Footer edit="apps/web/src/pages/index.astro" />
 </Layout>
 
 <!-- ───────────── Live verdict demo + scroll reveal ───────────── -->

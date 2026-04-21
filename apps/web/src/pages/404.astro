@@ -1,0 +1,53 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+---
+
+<Layout title="404 · defeated" description="This page was defeated by a higher-priority rule.">
+  <Nav />
+
+  <section class="max-w-wide mx-auto px-6 md:px-10 py-24 md:py-32">
+    <div class="max-w-3xl">
+      <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ error</span>
+      <h1 class="mt-4 font-serif">
+        <span class="text-accent italic">Defeated</span>
+        <span class="text-ink">.</span>
+      </h1>
+      <p class="mt-8 text-xl md:text-2xl max-w-prose text-sub font-serif" style="font-weight:400; line-height:1.45;">
+        This page was overruled by a higher-priority rule —
+        <span class="italic">lex non existentia</span>. There is no URL at this path.
+      </p>
+
+      <!-- Fake proof tree -->
+      <div class="mt-12 border border-rule bg-white">
+        <div class="flex items-center justify-between px-4 py-2.5 border-b border-rule bg-cream/50">
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">proof</span>
+          <span class="font-mono text-[11px] text-red-700">✗ not found</span>
+        </div>
+        <div class="p-5 font-mono text-[13px] space-y-2">
+          <p><span class="text-red-700">✗</span> rule <span class="text-ink">page_exists</span></p>
+          <p class="pl-6 text-sub">✗ <span class="text-mute">path is declared</span> → <span class="text-red-700">false</span></p>
+          <p class="pl-6 text-sub">⊘ <span class="text-mute">fallback</span> <span class="italic">(skipped)</span></p>
+        </div>
+        <div class="px-5 py-3 border-t border-rule bg-accent-bg/40">
+          <p class="text-[12px] text-accent italic font-serif">
+            <span class="not-italic font-mono font-normal text-[10px] uppercase tracking-[0.14em] text-mute mr-2">Tiebreaker</span>
+            no rule fires — request returns 404.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-12 flex flex-wrap gap-3">
+        <a href="/" class="inline-block no-underline bg-ink text-cream px-5 py-3 text-[14px] font-medium hover:bg-accent transition-colors link-arrow">
+          Home
+        </a>
+        <a href="/play" class="inline-block no-underline border border-ink px-5 py-3 text-[14px] font-medium hover:bg-ink hover:text-cream transition-colors">
+          Playground
+        </a>
+        <a href="/docs/getting-started" class="inline-block no-underline border border-ink px-5 py-3 text-[14px] font-medium hover:bg-ink hover:text-cream transition-colors">
+          Getting started
+        </a>
+      </div>
+    </div>
+  </section>
+</Layout>

@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
 
 const repo = 'https://github.com/sboghossian/nomos/blob/main';
 
@@ -51,7 +52,7 @@ const stages = [
   {
     name: 'Defeasibility solver',
     sub: 'evaluator.ts · evaluate()',
-    detail: 'Priority-based conflict resolution. Specificity + recency arriving soon.',
+    detail: 'Priority → specificity (lex specialis) → recency (lex posterior) → declaration order. Every tiebreak carries a human-readable summary.',
     href: `${repo}/packages/core/src/evaluator.ts#L150`,
     tone: 'accent',
   },
@@ -85,26 +86,25 @@ const surfaces = [
   },
   {
     name: 'Claude Skill',
-    sub: 'nomos-reason',
-    detail: 'Reasons over a Nomos program from inside Claude Code.',
-    href: '#',
-    coming: true,
+    sub: 'skills/nomos-reason',
+    detail: 'Teaches Claude to author and evaluate .nomos files. Ready for Lawvable submission.',
+    href: `${repo}/skills/nomos-reason`,
   },
   {
-    name: 'VS Code LSP',
-    sub: 'nomos-lsp',
-    detail: 'Syntax + hover + diagnostics.',
-    href: '#',
-    coming: true,
+    name: 'VS Code extension',
+    sub: 'packages/vscode',
+    detail: 'TextMate grammar + LSP: live diagnostics, hover with rule metadata, keyword and symbol completion.',
+    href: `${repo}/packages/vscode`,
   },
 ];
 
 const reuse = [
-  { name: 'Eyecite', role: 'Citation parser (US).', href: 'https://github.com/freelawproject/eyecite', coming: true },
-  { name: 'Concerto', role: 'Type system base.', href: 'https://github.com/accordproject/concerto', coming: true },
-  { name: 'Akoma Ntoso', role: 'Legislation import format.', href: 'http://www.akomantoso.org/', coming: true },
-  { name: 'CUAD / MAUD / ACORD', role: 'Extraction benchmarks.', href: 'https://www.atticusprojectai.org/' },
-  { name: 'OpenRouter', role: 'LLM gateway.', href: 'https://openrouter.ai' },
+  { name: 'Eyecite', role: 'US citation parser (Free Law Project). Integrated — `nomos resolve` calls it via a long-lived Python subprocess.', href: 'https://github.com/freelawproject/eyecite' },
+  { name: 'OpenRouter', role: 'LLM gateway. Drives `extract<T>` in both the CLI and the playground proxy.', href: 'https://openrouter.ai' },
+  { name: 'CUAD (Atticus Project)', role: 'Extraction benchmark. First run at 20 samples published; scaled runs incoming.', href: 'https://www.atticusprojectai.org/' },
+  { name: 'Concerto', role: 'Type-modelling DSL from Accord Project — inspiration; integration planned.', href: 'https://github.com/accordproject/concerto', coming: true },
+  { name: 'Akoma Ntoso', role: 'OASIS XML for legislation — integration planned.', href: 'http://www.akomantoso.org/', coming: true },
+  { name: 'Restate', role: 'Durable execution for long-lived human-in-loop gates — planned.', href: 'https://restate.dev', coming: true },
 ];
 ---
 
@@ -267,4 +267,5 @@ const reuse = [
       </a>
     </div>
   </section>
+  <Footer edit="apps/web/src/pages/architecture.astro" />
 </Layout>

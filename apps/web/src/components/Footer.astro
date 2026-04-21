@@ -1,0 +1,72 @@
+---
+interface Props {
+  /** Relative source path, e.g. "src/pages/architecture.astro". Used for the Edit-on-GitHub link. */
+  edit?: string;
+}
+const { edit } = Astro.props;
+
+const repo = 'https://github.com/sboghossian/nomos';
+const year = new Date().getFullYear();
+---
+
+<footer class="rule-top">
+  <div class="max-w-wide mx-auto px-6 md:px-10 py-10 grid md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 text-[13px]">
+    <div>
+      <div class="flex items-baseline gap-2">
+        <span class="font-serif text-2xl text-accent" style="font-weight:500">ν</span>
+        <span class="font-serif text-xl tracking-tight" style="font-weight:500">Nomos</span>
+      </div>
+      <p class="mt-3 text-sub text-[13px] max-w-xs">
+        A programming language for legal reasoning.
+        Experimental, Apache-2.0, built in public.
+      </p>
+      <p class="mt-3 font-mono text-[11px] text-mute">
+        © {year} Stephane Boghossian · νόμος
+      </p>
+    </div>
+
+    <div>
+      <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Try it</span>
+      <ul class="mt-3 space-y-2">
+        <li><a href="/play" class="no-underline text-sub hover:text-ink">Playground</a></li>
+        <li><a href="/docs/getting-started" class="no-underline text-sub hover:text-ink">Getting started</a></li>
+        <li><a href={`${repo}/releases`} target="_blank" class="no-underline text-sub hover:text-ink">Releases ↗</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Understand</span>
+      <ul class="mt-3 space-y-2">
+        <li><a href="/architecture" class="no-underline text-sub hover:text-ink">Architecture</a></li>
+        <li><a href="/research/thesis" class="no-underline text-sub hover:text-ink">Thesis</a></li>
+        <li><a href="/research/prior-art" class="no-underline text-sub hover:text-ink">Prior art</a></li>
+        <li><a href="/research/benchmarks" class="no-underline text-sub hover:text-ink">Benchmarks</a></li>
+        <li><a href="/changelog" class="no-underline text-sub hover:text-ink">Changelog</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Contribute</span>
+      <ul class="mt-3 space-y-2">
+        <li><a href={repo} target="_blank" class="no-underline text-sub hover:text-ink">GitHub ↗</a></li>
+        <li><a href={`${repo}/issues/new`} target="_blank" class="no-underline text-sub hover:text-ink">Open an issue ↗</a></li>
+        <li><a href={`${repo}/blob/main/LICENSE`} target="_blank" class="no-underline text-sub hover:text-ink">Apache-2.0</a></li>
+        <li><a href="/sitemap.xml" class="no-underline text-sub hover:text-ink">Sitemap</a></li>
+      </ul>
+    </div>
+  </div>
+
+  {edit && (
+    <div class="rule-top">
+      <div class="max-w-wide mx-auto px-6 md:px-10 py-5 flex items-center justify-between text-[12px] text-mute">
+        <span class="font-mono">νόμος · nómos · nomos</span>
+        <a
+          href={`${repo}/edit/main/${edit}`}
+          target="_blank"
+          class="no-underline hover:text-ink">
+          Spot something wrong? Edit this page on GitHub ↗
+        </a>
+      </div>
+    </div>
+  )}
+</footer>

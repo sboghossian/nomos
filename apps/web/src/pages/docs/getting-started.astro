@@ -1,0 +1,259 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Layout
+  title="Nomos · Getting started"
+  description="Install Nomos, write your first rule, run it, and read the proof tree. Fifteen minutes, end to end.">
+  <Nav />
+
+  <article class="reveal max-w-wide mx-auto px-6 md:px-10 py-16 md:py-24">
+    <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ Docs / Getting started</span>
+    <h1 class="mt-4 max-w-[22ch]">Your first <span class="text-accent italic">.nomos</span> program, in 15 minutes.</h1>
+
+    <p class="mt-10 text-xl md:text-2xl max-w-prose text-sub font-serif" style="font-weight:400; line-height:1.45;">
+      By the end of this page you will have installed Nomos, encoded a real
+      legal rule, bound facts to it, run the query, and read the proof tree.
+      No prior logic-programming experience required.
+    </p>
+
+    <!-- Table of contents -->
+    <div class="mt-12 border border-rule bg-white p-5 max-w-md">
+      <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Contents</span>
+      <ol class="mt-3 space-y-1.5 text-[14px] font-mono">
+        <li><a href="#install" class="no-underline text-sub hover:text-ink">01 · Install</a></li>
+        <li><a href="#program" class="no-underline text-sub hover:text-ink">02 · Write a tiny program</a></li>
+        <li><a href="#run" class="no-underline text-sub hover:text-ink">03 · Run it</a></li>
+        <li><a href="#proof" class="no-underline text-sub hover:text-ink">04 · Read the proof tree</a></li>
+        <li><a href="#defeater" class="no-underline text-sub hover:text-ink">05 · Add a defeater</a></li>
+        <li><a href="#llm" class="no-underline text-sub hover:text-ink">06 · Extract facts from prose (optional)</a></li>
+        <li><a href="#next" class="no-underline text-sub hover:text-ink">07 · Where to go next</a></li>
+      </ol>
+    </div>
+
+    <hr class="my-16 border-rule" />
+
+    <!-- 01 Install -->
+    <section id="install" class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14 scroll-mt-24">
+      <div>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 01</span>
+      </div>
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Install.</h2>
+        <p class="mb-4">
+          Nomos needs <strong>Node ≥ 20</strong>. Python is optional (Eyecite
+          for US-citation resolution).
+        </p>
+        <pre class="border border-rule bg-white p-4 text-[13px] font-mono overflow-x-auto"><code>git clone https://github.com/sboghossian/nomos
+cd nomos
+npm install
+npm run build</code></pre>
+        <p class="mt-4 text-sub text-[14px]">
+          That's it. The <code>nomos</code> CLI is now available via
+          <code>npx nomos</code>.
+        </p>
+      </div>
+    </section>
+
+    <hr class="my-16 border-rule" />
+
+    <!-- 02 Program -->
+    <section id="program" class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14 scroll-mt-24">
+      <div>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 02</span>
+      </div>
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Write a tiny program.</h2>
+        <p class="mb-4">
+          Create a new file <code>hello.nomos</code>:
+        </p>
+        <pre class="border border-rule bg-white p-4 text-[13px] font-mono overflow-x-auto"><code>{`// hello.nomos — a 6-line rule about California minimum wage.
+
+rule minimum_wage_applies @ US-CA from 2023-01-01 {
+  requires worker.age >= 14
+  requires worker.hours_per_week > 0
+  authority: ca_labor_code.section("1182.12")
+}
+
+query minimum_wage_applies as of 2026-04-18`}</code></pre>
+
+        <p class="mt-5 mb-4 text-sub text-[14px]">
+          Then <code>hello.input.json</code> next to it with the facts:
+        </p>
+        <pre class="border border-rule bg-white p-4 text-[13px] font-mono overflow-x-auto"><code>{`{
+  "worker": { "age": 17, "hours_per_week": 20 }
+}`}</code></pre>
+
+        <p class="mt-5 text-sub text-[14px]">
+          A rule has a <strong>name</strong>, a <strong>jurisdiction</strong>
+          (<code>@ US-CA</code>), a <strong>validity date</strong>
+          (<code>from 2023-01-01</code>), a list of <strong>requires</strong>
+          predicates, and one or more <strong>authority:</strong> citations. The
+          <strong>query</strong> asks "does this rule apply <em>as of</em> this date?"
+        </p>
+      </div>
+    </section>
+
+    <hr class="my-16 border-rule" />
+
+    <!-- 03 Run -->
+    <section id="run" class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14 scroll-mt-24">
+      <div>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 03</span>
+      </div>
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Run it.</h2>
+        <pre class="border border-rule bg-white p-4 text-[13px] font-mono overflow-x-auto"><code>npx nomos run hello.nomos</code></pre>
+        <p class="mt-4 mb-4">You'll see three sections:</p>
+        <pre class="border border-rule bg-white p-4 text-[12px] font-mono overflow-x-auto"><code>{`─── VERDICT ────────────────────────────────
+  value         TRUE
+  winning rule  minimum_wage_applies
+  authorities
+      ca_labor_code.section("1182.12")
+
+─── PROOF ──────────────────────────────────
+  ✓ minimum_wage_applies
+      ✓ worker.age >= 14  → true
+      ✓ worker.hours_per_week > 0  → true`}</code></pre>
+        <p class="mt-5 text-sub text-[14px]">
+          The rule fires because both requires are satisfied. You can also
+          run <code>nomos parse hello.nomos</code> to see the AST,
+          <code>nomos check hello.nomos</code> for diagnostics only, or
+          <code>nomos resolve hello.nomos</code> to resolve the US citation
+          through Eyecite.
+        </p>
+      </div>
+    </section>
+
+    <hr class="my-16 border-rule" />
+
+    <!-- 04 Proof tree -->
+    <section id="proof" class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14 scroll-mt-24">
+      <div>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 04</span>
+      </div>
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Read the proof tree.</h2>
+        <p class="mb-4">
+          Change <code>worker.age</code> to <code>12</code> in the JSON and
+          re-run. The proof tree now shows which requirement failed:
+        </p>
+        <pre class="border border-rule bg-white p-4 text-[12px] font-mono overflow-x-auto"><code>{`─── VERDICT ────────────────────────────────
+  value         FALSE
+  winning rule  —
+
+─── PROOF ──────────────────────────────────
+  ✗ minimum_wage_applies
+      ✗ worker.age >= 14  → 12           ← the actual value
+      ✓ worker.hours_per_week > 0  → true`}</code></pre>
+        <p class="mt-5 text-sub text-[14px]">
+          The failing requirement prints the computed value (<code>12</code>)
+          so you can see exactly why the rule didn't fire. Every verdict is
+          auditable end-to-end.
+        </p>
+      </div>
+    </section>
+
+    <hr class="my-16 border-rule" />
+
+    <!-- 05 Defeater -->
+    <section id="defeater" class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14 scroll-mt-24">
+      <div>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 05</span>
+      </div>
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Add a defeater.</h2>
+        <p class="mb-4">
+          Real law has exceptions. Here's an exemption for casual babysitters
+          that overrides the base rule:
+        </p>
+        <pre class="border border-rule bg-white p-4 text-[13px] font-mono overflow-x-auto"><code>{`rule babysitter_exemption @ US-CA priority 100
+  defeats minimum_wage_applies
+  when worker.role == "babysitter"
+{
+  authority: ca_labor_code.section("1182.4(a)")
+}`}</code></pre>
+        <p class="mt-5 text-sub text-[14px]">
+          With <code>priority 100</code> (higher than the default <code>0</code>),
+          this rule beats <code>minimum_wage_applies</code> whenever
+          <code>worker.role == "babysitter"</code>. Nomos records the tiebreak
+          in the proof tree with a human-readable reason.
+        </p>
+
+        <div class="mt-6 border-l-2 border-accent pl-5 py-2 bg-accent-bg/40">
+          <p class="font-serif italic text-[15px] text-ink">
+            Defeasibility is the point. Rules contradict; Nomos resolves the
+            contest and tells you how.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="my-16 border-rule" />
+
+    <!-- 06 LLM -->
+    <section id="llm" class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14 scroll-mt-24">
+      <div>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 06</span>
+      </div>
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Extract facts from prose (optional).</h2>
+        <p class="mb-4">
+          So far your facts were a hand-written JSON file. Nomos can also
+          extract them from contracts or statutes via LLM:
+        </p>
+        <pre class="border border-rule bg-white p-4 text-[13px] font-mono overflow-x-auto"><code>{`type Worker {
+  age: Int
+  role: String
+  hours_per_week: Int
+}
+
+fact worker: Worker = extract<Worker>(contract_text)
+  using llm("claude-sonnet-4-5")
+  verified_by human if confidence < 0.95`}</code></pre>
+        <p class="mt-4 mb-4 text-sub text-[14px]">
+          With an <code>OPENROUTER_API_KEY</code> in <code>.env</code>:
+        </p>
+        <pre class="border border-rule bg-white p-4 text-[13px] font-mono overflow-x-auto"><code>npx nomos run hello.nomos --with-llm</code></pre>
+        <p class="mt-5 text-sub text-[14px]">
+          The compiler derives a JSON schema from the <code>Worker</code> type,
+          calls OpenRouter, and binds the extracted value. If the model's
+          self-rated confidence falls below <code>0.95</code>, Nomos flags it
+          for human review instead of trusting the extraction blindly.
+        </p>
+        <p class="mt-4 text-sub text-[14px]">
+          Prefer not to run it locally? The
+          <a href="/play">browser playground</a> has an <strong>LLM</strong>
+          toggle that calls a hosted proxy — no key required.
+        </p>
+      </div>
+    </section>
+
+    <hr class="my-16 border-rule" />
+
+    <!-- 07 Next -->
+    <section id="next" class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14 scroll-mt-24">
+      <div>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 07</span>
+      </div>
+      <div class="max-w-prose">
+        <h2 class="font-serif mb-6" style="font-weight:500">Where to go next.</h2>
+        <ul class="space-y-3 text-[15px]">
+          <li>▸ Open the <a href="/play">playground</a> and flip between three scenarios of a French non-compete clause.</li>
+          <li>▸ Read the <a href="/research/thesis">thesis</a> — why Nomos exists and what claims it makes.</li>
+          <li>▸ Skim the <a href="/research/prior-art">prior-art survey</a> — Catala, OpenFisca, Blawx, Kowalski, etc.</li>
+          <li>▸ See honest <a href="/research/benchmarks">CUAD benchmark numbers</a> for <code>extract&lt;T&gt;</code>.</li>
+          <li>▸ Look at the <a href="/architecture">architecture page</a> to see every compiler stage linked to its source file.</li>
+          <li>▸ Browse the <a href="https://github.com/sboghossian/nomos" target="_blank">GitHub repo</a> — issues and discussions welcome.</li>
+        </ul>
+        <p class="mt-10 text-[14px] text-mute">
+          Nomos is v0. Breaking changes expected. Not legal advice.
+        </p>
+      </div>
+    </section>
+  </article>
+
+  <Footer edit="apps/web/src/pages/docs/getting-started.astro" />
+</Layout>
