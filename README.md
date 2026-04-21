@@ -261,53 +261,180 @@ Full skill docs: [skills/nomos-reason/README.md](./skills/nomos-reason/README.md
 
 ## How it compares
 
-| System                                            | Paradigm                      |   LLM bridge   |            Defeasibility            |   Temporal types    | License    |
-| :------------------------------------------------ | :---------------------------- | :------------: | :---------------------------------: | :-----------------: | :--------- |
-| **Nomos**                                         | Typed functional + defeasible | ✅ first-class | ✅ priority + specialis + posterior | ✅ `from` / `as of` | Apache-2.0 |
-| [Catala](https://catala-lang.org/)                | Functional + default logic    |       ❌       |          ✅ default logic           |       partial       | Apache-2.0 |
-| [OpenFisca](https://openfisca.org/)               | Python library                |       ❌       |                 ❌                  |         ❌          | AGPL       |
-| [Blawx](https://app.blawx.dev/)                   | Visual → s(CASP)              |       ❌       |             ✅ via ASP              |         ❌          | MIT        |
-| [Logical English](https://www.doc.ic.ac.uk/~rak/) | Controlled NL → Prolog        |       ❌       |               partial               |         ❌          | research   |
-| LangGraph / LangChain                             | Agent orchestration           |  ✅ (untyped)  |                 ❌                  |         ❌          | MIT        |
+Nomos sits in a specific intersection: a **typed programming language**
+(not a library, not a visual editor) for **legal reasoning** (not general
+agents) with **first-class LLM bridges** (not post-hoc glue).
 
-See the full survey at [/research/prior-art](https://nomos.dashable.dev/research/prior-art).
+### ⭐ Nomos
 
-## Use cases (and non-cases)
+- **Paradigm**: typed functional with defeasible logic
+- **LLM bridge**: first-class primitive (`extract<T> using llm(...) verified_by human`)
+- **Defeasibility**: priority → specificity → recency → declaration order
+- **Temporal types**: rules carry `from DATE`; queries run `as of DATE`
+- **Citations**: typed `AuthorityRef` AST, Eyecite-backed for US
+- **License**: Apache-2.0 · **Language**: TypeScript · **Status**: v0.1.1
 
-### Good fits
+### Catala — [catala-lang.org](https://catala-lang.org/)
 
-- Encoding statutes or contracts whose logic needs to be auditable
-- Legal-AI agents that must cite their sources
-- Compliance rule engines that need temporal + jurisdictional correctness
-- Any workflow where an LLM extracts structured data and typed rules reason over it
+Inria's research project. The cleanest academic account of how
+legislative exceptions compose. Strong provenance, OCaml-native
+toolchain, lawyer-readable articles.
 
-### Not fits (yet)
+- ✅ Default logic, exception composition, literate-programming workflow
+- ❌ No LLM bridge — facts must be provided as structured data
+- ❌ OCaml + Python target; limited browser/agent story
 
-- Production legal advice — this is experimental v0; always verify with counsel
-- Jurisdictions with no declared rules — the language doesn't know law it hasn't been told
-- Heavy natural-language reasoning tasks — LLMs stay at the edge, not inside the reasoning engine
-- Real-time systems with strict latency budgets — LLM extraction is 2–5s per fact
+**Takeaway**: if you're a researcher encoding tax law line-by-line,
+Catala. If you're building an agent that reads contracts, Nomos.
+
+### OpenFisca — [openfisca.org](https://openfisca.org/)
+
+Python library deployed at national scale (France, UK, NZ, Tunisia,
+Senegal). Proof that rules-as-code works in production for tax and
+benefit calculations.
+
+- ✅ Government-scale production adoption
+- ❌ No defeasibility, no temporal types (everything's `if (date >= …)` boilerplate)
+- ❌ No LLM bridge
+
+**Takeaway**: if you're running tax code for a government, OpenFisca.
+If you need conflict resolution or LLM extraction, Nomos.
+
+### Blawx — [app.blawx.dev](https://app.blawx.dev/)
+
+Jason Morris' visual rules-as-code over s(CASP). Lawyer-first UX,
+explanations for every answer, CodeX-award ecosystem.
+
+- ✅ Explanation-first, beautiful for lawyer adoption
+- ❌ Visual/Blockly interface — not where serious code lives
+- ❌ No LLM bridge; Prolog runtime dependency
+
+**Takeaway**: Blawx for lawyers who won't write TypeScript. Nomos for
+engineers who will.
+
+### Logical English — Kowalski, Imperial College
+
+Controlled natural language over Prolog. Lawyers write near-English
+prose that compiles to logic.
+
+- ✅ Foundational CodeX-prize research, linguistic rigor
+- ❌ Small tooling ecosystem; research-only
+- ❌ Parsing ambiguity is unsolved in general
+
+### LangGraph / LangChain — general-purpose agent orchestration
+
+Not legal-specific. Includes LLM calls and graph flow; no typed
+extraction, no defeasibility, no temporal typing, no citation system.
+
+**Takeaway**: LangGraph is the right tool for an arbitrary agent.
+Nomos is the right tool when the agent needs a defensible chain back
+to statutes.
+
+> Full survey at [/research/prior-art](https://nomos.dashable.dev/research/prior-art).
+
+## Concrete use cases
+
+Three real workflows where Nomos earns its place:
+
+### 1. Auditable legal-AI agents
+
+Your agent reads a contract with an LLM and decides if a clause is
+enforceable. The regulator asks why. Without Nomos the answer is "the
+model said so." With Nomos the answer is a proof tree with statute
+citations, facts the model extracted (and its confidence), and the
+specific requirement that passed or failed. If the verdict is wrong,
+you can point at the rule that's wrong.
+
+> **Example**: a legal-AI SaaS flags 30 M non-compete clauses per
+> quarter across French employment contracts. Compliance officers
+> need a why for every flag. Nomos turns the agent's extract → verdict
+> into a traceable chain.
+
+### 2. Compliance rule engines with dates and jurisdictions
+
+Tax code, labor regs, and sanctions lists change by jurisdiction and
+by date. A rule valid in France from 2016-08-10 must not apply to a
+contract dated 2015. Today's version of your engine has that logic
+scattered as `if (date >= …)` branches across the codebase; in Nomos
+it's a type-system property.
+
+> **Example**: a GDPR-compliance checker that runs an Italian contract
+> `as of` the date it was signed and only applies rules valid at that
+> time, refusing to retrofit newer obligations.
+
+### 3. Structured extraction with a confidence gate
+
+The weakest link in any legal-AI pipeline is the LLM's self-rated
+confidence. Nomos lets you declare the threshold and the fallback in
+the source:
+
+```nomos
+fact clause: NonCompete = extract<NonCompete>(contract_text)
+  using llm("claude-sonnet-4-5")
+  verified_by human if confidence < 0.95
+```
+
+Anything below 0.95 routes to a human queue instead of silently being
+wrong. The `extractEnsemble` primitive goes further: run the same
+prompt through 3 models in parallel, accept when they agree, flag when
+they don't.
+
+> **Example**: a contract-review platform extracts dates across 500
+> contracts. Sonnet 4.5, Opus 4.7, and GPT-5 get the same prompt.
+> The 8% of cases where they disagree go to a paralegal.
+
+## When Nomos is not the right fit
+
+- **Production legal advice** — this is experimental v0. Always verify with licensed counsel.
+- **Jurisdictions you haven't encoded** — Nomos has no opinion about law it hasn't been told.
+- **Open-ended legal reasoning** — summarizing a case, drafting a memo. The LLM sits at the edge of Nomos, not inside it.
+- **Sub-second latencies** — each `extract<T>` takes 2–5 seconds. Cache-on-repeat helps, but a first run is LLM-bound.
 
 ## Status & roadmap
 
-**v0.1.0** — first public release. See [CHANGELOG.md](./CHANGELOG.md) for the
-full list.
+**v0.1.1 shipped · 2026-04-21.** See [CHANGELOG.md](./CHANGELOG.md).
 
-Coming next:
+### What works today
 
-- Specificity + semantic scoring (currently structural only)
-- Akoma Ntoso legislation import
-- Docassemble output adapter — Nomos program → guided interview
-- Rule-pack marketplace (`nomos install @nomos/fr-labour`)
-- Full CUAD + MAUD + ACORD benchmark sweep
+- Parser, typed AST, checker, evaluator, full defeasibility solver
+  (priority → specificity → recency → declaration order)
+- Grammar: types, rules, facts, queries, predicates, durations,
+  negation, `!=`, `is`, member/call/index chains, binary + unary ops
+- `extract<T>` via OpenRouter with confidence + human-gate + on-disk
+  cache + cross-model ensemble
+- Eyecite US citation resolver
+- CLI: `run` / `parse` / `check` / `resolve`
+- VS Code extension (TextMate + LSP)
+- Browser playground at [nomos.dashable.dev/play](https://nomos.dashable.dev/play)
+- Claude Skill: `skills/nomos-reason`
+- CUAD benchmark harness, cross-model, reproducible
+- 42 Vitest specs pinning behavior
 
-Track: [GitHub issues](https://github.com/sboghossian/nomos/issues) · [Changelog](https://nomos.dashable.dev/changelog) · [Roadmap ideas](./tasks/todo.md)
+### Next up
+
+Ranked by priority.
+
+1. **Semantic specificity scoring** — currently structural (counts `requires`). Real
+   *lex specialis* is about the domain of the rule, not its shape.
+2. **Akoma Ntoso loader** — read OASIS-format statutes and emit Nomos
+   rule skeletons a human can annotate.
+3. **Docassemble output adapter** — compile a Nomos program to a
+   guided legal interview.
+4. **500-extraction CUAD sweep** + MAUD + ACORD coverage.
+5. **Rule packs** — `nomos install @nomos/fr-labour`. A marketplace
+   aspiration; first release would just be versioned git repos.
+6. **LSP upgrades** — go-to-definition, rename, inlay hints.
+7. **nomos init / nomos fmt** — project scaffolding and canonical formatter.
+
+Track: [issues](https://github.com/sboghossian/nomos/issues) ·
+[live changelog](https://nomos.dashable.dev/changelog) ·
+[contributing](./CONTRIBUTING.md)
 
 ## Contributing
 
-Issues, discussions, and exploratory PRs welcome. Breaking changes expected
-during v0. See [CONTRIBUTING.md](./CONTRIBUTING.md) (coming soon) for the
-dev loop.
+Issues, discussions, and exploratory PRs welcome. Breaking changes
+expected while v0 shapes itself. **Read [CONTRIBUTING.md](./CONTRIBUTING.md)**
+for setup, conventions, and a ranked list of what I'd love help with.
 
 Key commands:
 

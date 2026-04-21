@@ -1,0 +1,43 @@
+---
+/**
+ * A small colored mark for an external tool / project.
+ * Falls back to a tinted initial badge when no image is supplied.
+ */
+interface Props {
+  name: string;
+  /** Optional explicit two-letter initials; auto-derived when omitted. */
+  initials?: string;
+  /** Brand hex (background). */
+  color?: string;
+  /** Text color on the badge. Defaults to white. */
+  fg?: string;
+  size?: "sm" | "md" | "lg";
+}
+
+const { name, initials, color = "#2D5016", fg = "#FAF8F3", size = "md" } =
+  Astro.props;
+
+function deriveInitials(n: string): string {
+  const parts = n
+    .replace(/\(.*?\)/g, "")
+    .split(/[\s/-]+/)
+    .filter(Boolean);
+  if (parts.length >= 2) return (parts[0]![0]! + parts[1]![0]!).toUpperCase();
+  return n.slice(0, 2).toUpperCase();
+}
+
+const label = initials ?? deriveInitials(name);
+const sizes = {
+  sm: { w: 28, fs: 11 },
+  md: { w: 40, fs: 14 },
+  lg: { w: 56, fs: 18 },
+};
+const s = sizes[size];
+---
+
+<span
+  style={`display:inline-flex;align-items:center;justify-content:center;width:${s.w}px;height:${s.w}px;background:${color};color:${fg};font-family:ui-sans-serif,system-ui,sans-serif;font-weight:600;font-size:${s.fs}px;letter-spacing:0.03em;border-radius:4px;flex-shrink:0;`}
+  aria-label={name}
+>
+  {label}
+</span>

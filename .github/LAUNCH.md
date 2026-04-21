@@ -187,6 +187,36 @@ https://github.com/sboghossian/nomos
 
 ---
 
+## LinkedIn post — humanized, v0.1.1 (Stephane's draft, extended)
+
+I built a programming language for legal reasoning.
+
+It's called Nomos — νόμος, /ˈnomos/, Greek for law, custom, rule. Yes, you heard that right. A programming language. For legal rules.
+
+It's basic. It works at scale. Here it is: https://lnkd.in/egi9_fWR
+
+Why I built it: I work at Hock, deep in legal tech every day. I kept running into the same wall — LLMs are great at reading contracts, terrible at reasoning with rules. Rule engines are great at reasoning, terrible at reading contracts. Nobody was putting them together the right way.
+
+So I spent a few evenings trying. You write typed rules. The LLM pulls facts out of a contract. When two rules contradict — a consumer law vs a labour law — Nomos picks a winner and shows its work, with citations back to statutes.
+
+This is a side project. Apache-2.0. Not a company. Not legal advice. An experiment.
+
+I'd love help:
+
+- Try the playground in your browser: nomos.dashable.dev/play
+- Install the Claude Skill: github.com/sboghossian/nomos/tree/main/skills/nomos-reason
+- Break things, file issues, send PRs: github.com/sboghossian/nomos
+- Build on top — the core is a TypeScript package you can import today
+
+Built in public, mostly with Claude Code as a pair. If you work in legal tech, rules-as-code, or just like weird little languages, come poke at it. The open-source legal community has carried this idea for fifty years (Catala, OpenFisca, Blawx, Kowalski's 1981 British Nationality Act paper) — I'm just adding one more experiment on top.
+
+Feedback, critiques, PRs — all very welcome.
+
+→ nomos.dashable.dev
+→ github.com/sboghossian/nomos
+
+---
+
 ## Pre-flight checklist
 
 - [ ] All tests green (`npm test` — 26 passing)

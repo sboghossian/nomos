@@ -10,6 +10,45 @@ Honest wins and losses. Build log is public at
 
 ---
 
+## [0.1.1] — 2026-04-21
+
+Drop-in patch. No breaking changes.
+
+### Added
+
+- **Negation** — `not x` keyword and `!x` operator as unary prefix.
+- **`!=`** — strict inequality.
+- **Duration literals** — `18.months`, `2.years`, `30.days`, `6.weeks`. Stored as float months.
+- **User-defined predicates** — `predicate foo(x) = …`, usable via `is foo` and `foo(x)` call form.
+- **Operand surfacing on failing requirements** — the proof tree now shows `clause.compensation_pct = 0.12` inline under a failing `>= 0.30` check.
+- **LLM extraction cache** — content-addressed by `(model, source, schema, typeName, kwargs)`; repeat runs are free. `.nomos-cache/` (gitignored). Override via `NOMOS_CACHE_DIR`, disable via `NOMOS_CACHE_DISABLED=1`.
+- **`extractEnsemble`** — parallel calls to N models with plurality vote on deep equality. Graceful degradation when one model fails.
+- **Scaled CUAD benchmark** — `--models comma,separated` flag. First cross-model run at n=10×4×3=120 extractions (Sonnet 4.5 / GPT-4o / Gemini 2.5 Pro).
+- **`/docs/getting-started`** — 7-section tutorial.
+- **404 page** with on-brand "defeated by a higher-priority rule" message.
+- **`Footer` component** with "Edit this page on GitHub" on every page.
+- **Remotion demo video** (22 s, 1080p MP4 + 960px GIF) + six still frames in `docs/media/`.
+- **Claude Skill packaged as zip** attached to the v0.1.1 release; drop-in for `~/.claude/skills/`.
+- **Screenshots** of every page via Playwright in `docs/media/`.
+- **Grammar tests** — 16 Vitest specs for negation, `!=`, durations, predicates, operand surfacing.
+- **MODEL_ALIASES refreshed** against live OpenRouter (Sonnet 4.6, Opus 4.1–4.7, Haiku 4.5, GPT-5 variants, Gemini 3 previews).
+- **CONTRIBUTING.md** — setup, repo layout, release flow, help wanted.
+
+### Changed
+
+- **Home page copy humanized** — removed AI-style parallelism, em-dash overuse, rule-of-three patterns, "shoulders of giants" cliché. First-person where it fits.
+- **Architecture page** — stopped marking shipped surfaces (VS Code, Claude Skill, Eyecite) as "coming."
+- **Thesis, Prior Art, Benchmarks pages** — h2 headings no longer cramped into 220 px left columns; labels now 140 px sticky-on-scroll with headings in the wide column.
+- **Home page demo** — wired to the real `@nomos/core` evaluator instead of hardcoded verdict JSON.
+- **Scroll-reveal** converted to progressive enhancement (JS-enhanced, not JS-required) with a 2-second safety net.
+
+### Fixed
+
+- Unresolved-reference checker now knows about user-defined predicates.
+- `!=` and `!` lex unambiguously (negative-lookahead on `!`).
+
+---
+
 ## [0.1.0] — 2026-04-18
 
 First public release. The language runs end-to-end: parse → check →

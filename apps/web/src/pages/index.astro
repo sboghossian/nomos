@@ -2,6 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import ToolMark from '../components/ToolMark.astro';
+import PipelineDiagram from '../components/PipelineDiagram.astro';
 
 const nomosExample = `// A French non-compete clause, reasoned about as of 2026-04-18.
 
@@ -42,21 +44,141 @@ query non_compete_enforceable(clause, parties[0]) as of 2026-04-18
 `;
 
 const priorArt = [
-  { name: 'Catala', org: 'Inria', contribution: 'Default logic for legislation, lawyer-readable syntax' },
-  { name: 'OpenFisca', org: 'France', contribution: 'Proof that rules-as-code runs at government scale' },
-  { name: 'Blawx', org: 'Lexpedite', contribution: 'Explanation generation over s(CASP)' },
-  { name: 'Logical English', org: 'Kowalski / Imperial', contribution: 'Controlled natural language frontend' },
-  { name: 'Kowalski et al. (1981)', org: 'British Nationality Act', contribution: 'The foundational encoding — CodeX Prize 2021' },
-  { name: 'LegalRuleML', org: 'OASIS', contribution: 'Interop standard for legal rules' },
+  {
+    name: 'Catala',
+    org: 'Inria',
+    year: '2020',
+    href: 'https://catala-lang.org/',
+    initials: 'Ca',
+    color: '#1F3A4A',
+    contribution: "Inria's research project. Default logic as a first-class feature, mirroring how legislation actually structures exceptions. The closest modern academic ancestor.",
+    takeaway: 'Cleanest account of legislative exceptions I\'ve seen.',
+  },
+  {
+    name: 'OpenFisca',
+    org: 'France · Etalab',
+    year: '2011',
+    href: 'https://openfisca.org/',
+    initials: 'OF',
+    color: '#002654',
+    contribution: 'Tax and benefit law as typed Python. Deployed at national scale in France, UK, New Zealand, Tunisia, Senegal.',
+    takeaway: 'Proof that rules-as-code actually runs in production.',
+  },
+  {
+    name: 'Blawx',
+    org: 'Lexpedite · Jason Morris',
+    year: '2020',
+    href: 'https://app.blawx.dev/',
+    initials: 'Bx',
+    color: '#5A7D3A',
+    contribution: "Visual rules-as-code over s(CASP), with natural-language explanations for every answer. Built for lawyers, not engineers.",
+    takeaway: 'Explanation-first UX Nomos should borrow.',
+  },
+  {
+    name: 'Logical English',
+    org: 'Kowalski · Imperial',
+    year: '2020',
+    href: 'https://www.doc.ic.ac.uk/~rak/papers/LogicalEnglish.pdf',
+    initials: 'LE',
+    color: '#611A1A',
+    contribution: 'Controlled natural language that compiles to Prolog. Kowalski\'s framing of law-as-logic.',
+    takeaway: 'A plausible future frontend for Nomos.',
+  },
+  {
+    name: 'British Nationality Act',
+    org: 'Kowalski et al. · 1981',
+    year: '1981',
+    href: 'https://dl.acm.org/doi/10.1145/5689.5920',
+    initials: 'BN',
+    color: '#8B1A1A',
+    contribution: 'The foundational encoding — an entire statute, in Prolog, forty years ago. CodeX Prize 2021.',
+    takeaway: 'The logic was never the hard part.',
+  },
+  {
+    name: 'LegalRuleML',
+    org: 'OASIS',
+    year: '2013',
+    href: 'https://www.oasis-open.org/committees/legalruleml/',
+    initials: 'LR',
+    color: '#4A4A4A',
+    contribution: 'XML interchange format for legal rules. Not a programming language, but a shared vocabulary for rule/exception/defeasibility.',
+    takeaway: 'Possible interop target.',
+  },
 ];
 
 const stack = [
-  { name: 'Eyecite', role: 'US citation resolver', href: 'https://github.com/freelawproject/eyecite' },
-  { name: 'Concerto', role: 'Type system base', href: 'https://github.com/accordproject/concerto' },
-  { name: 'Akoma Ntoso', role: 'Legislation import', href: 'http://www.akomantoso.org/' },
-  { name: 'CUAD / MAUD / ACORD', role: 'Extraction benchmarks', href: 'https://www.atticusprojectai.org/' },
-  { name: 'Restate', role: 'Durable execution', href: 'https://restate.dev' },
-  { name: 'Docassemble', role: 'Interview export', href: 'https://docassemble.org/' },
+  {
+    name: 'Eyecite',
+    role: 'US citation parser — tested against millions of citations',
+    href: 'https://github.com/freelawproject/eyecite',
+    org: 'Free Law Project',
+    initials: 'Ey',
+    color: '#2D5016',
+    status: 'integrated',
+  },
+  {
+    name: 'OpenRouter',
+    role: 'LLM gateway — drives extract<T> across Claude, GPT, Gemini',
+    href: 'https://openrouter.ai',
+    org: 'OpenRouter.ai',
+    initials: 'OR',
+    color: '#222',
+    status: 'integrated',
+  },
+  {
+    name: 'Chevrotain',
+    role: 'Parser toolkit — the CST and visitor pipeline',
+    href: 'https://chevrotain.io',
+    org: 'sap · open source',
+    initials: 'Ch',
+    color: '#C23737',
+    status: 'integrated',
+  },
+  {
+    name: 'CUAD · MAUD · ACORD',
+    role: 'Extraction benchmarks — 20k+ annotated clauses',
+    href: 'https://www.atticusprojectai.org/',
+    org: 'Atticus Project',
+    initials: 'At',
+    color: '#1D4E89',
+    status: 'integrated',
+  },
+  {
+    name: 'Concerto',
+    role: 'Type-modelling DSL — inspiration for our type system',
+    href: 'https://github.com/accordproject/concerto',
+    org: 'Accord Project',
+    initials: 'Co',
+    color: '#6F5EE8',
+    status: 'planned',
+  },
+  {
+    name: 'Akoma Ntoso',
+    role: 'OASIS XML for legislation — import path',
+    href: 'http://www.akomantoso.org/',
+    org: 'OASIS',
+    initials: 'AN',
+    color: '#555',
+    status: 'planned',
+  },
+  {
+    name: 'Restate',
+    role: 'Durable execution — long-lived human-in-loop gates',
+    href: 'https://restate.dev',
+    org: 'restate.dev',
+    initials: 'Re',
+    color: '#5B2E91',
+    status: 'planned',
+  },
+  {
+    name: 'Docassemble',
+    role: 'Guided legal interviews — output adapter',
+    href: 'https://docassemble.org/',
+    org: 'jhpyle · GNU AGPL',
+    initials: 'Do',
+    color: '#0E6BA8',
+    status: 'planned',
+  },
 ];
 ---
 
@@ -233,12 +355,34 @@ const stack = [
     </div>
   </section>
 
+  <!-- ─────────── Pipeline diagram ─────────── -->
+  <section id="pipeline" class="rule-top bg-white reveal">
+    <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
+      <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-6">
+        <div>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 02 — Pipeline</span>
+          <h2 class="mt-4 font-serif">How a rule becomes a verdict.</h2>
+        </div>
+        <div class="max-w-prose">
+          <p>
+            Five stages, one non-deterministic link in the middle. The
+            packets moving along the arrows are the typed values actually
+            crossing each boundary. Click any box on
+            <a href="/architecture">/architecture</a> to jump to its source file.
+          </p>
+        </div>
+      </div>
+
+      <PipelineDiagram />
+    </div>
+  </section>
+
   <!-- ─────────── Language ─────────── -->
   <section id="language" class="rule-top reveal">
     <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
       <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-10">
         <div>
-          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 02 — Language</span>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 03 — Language</span>
           <h2 class="mt-4 font-serif">A sketch.</h2>
         </div>
         <div class="max-w-prose">
@@ -286,7 +430,7 @@ const stack = [
     <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
       <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-16">
         <div>
-          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 03 — Pillars</span>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 04 — Pillars</span>
           <h2 class="mt-4 font-serif">The four things I think matter.</h2>
         </div>
         <div class="max-w-prose">
@@ -365,7 +509,7 @@ const stack = [
     <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
       <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-12">
         <div>
-          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 04 — Stack</span>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 05 — Stack</span>
           <h2 class="mt-4 font-serif">A thin layer.</h2>
         </div>
         <div class="max-w-prose">
@@ -382,12 +526,17 @@ const stack = [
         {stack.map((s) => (
           <a
             href={s.href}
+            target="_blank"
             class="block border-b border-rule py-5 px-2 hover:bg-accent-bg transition-colors no-underline group">
-            <div class="grid md:grid-cols-[1fr_2fr_auto] gap-4 items-baseline">
-              <span class="font-serif text-lg text-ink" style="font-weight:500">{s.name}</span>
-              <span class="text-sub text-[15px]">{s.role}</span>
-              <span class="font-mono text-[11px] text-mute group-hover:text-accent">
-                {new URL(s.href).hostname.replace(/^www\./, '')} ↗
+            <div class="grid md:grid-cols-[56px_1fr_2fr_auto] gap-5 items-center">
+              <ToolMark name={s.name} initials={s.initials} color={s.color} size="md" />
+              <div>
+                <div class="font-serif text-lg text-ink" style="font-weight:500">{s.name}</div>
+                <div class="font-mono text-[11px] text-mute">{s.org}</div>
+              </div>
+              <span class="text-sub text-[14px]">{s.role}</span>
+              <span class={`chip text-[10px] ${s.status === 'integrated' ? 'chip-accent' : ''}`}>
+                {s.status}
               </span>
             </div>
           </a>
@@ -401,7 +550,7 @@ const stack = [
     <div class="max-w-wide mx-auto px-6 md:px-10 py-20 md:py-28">
       <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-12">
         <div>
-          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 05 — Prior art</span>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 06 — Prior art</span>
           <h2 class="mt-4 font-serif">Who came before.</h2>
         </div>
         <div class="max-w-prose">
@@ -413,15 +562,28 @@ const stack = [
         </div>
       </div>
 
-      <div class="grid md:grid-cols-2 gap-x-12 gap-y-8">
+      <div class="grid md:grid-cols-2 gap-x-8 gap-y-6">
         {priorArt.map((p) => (
-          <div class="border-l-2 border-accent-soft/40 pl-5 py-1">
-            <div class="flex items-baseline gap-3 mb-1.5">
-              <span class="font-serif text-lg" style="font-weight:500">{p.name}</span>
-              <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">{p.org}</span>
+          <a
+            href={p.href}
+            target="_blank"
+            class="block border border-rule hover:border-accent-soft/50 hover:bg-accent-bg/40 transition-colors p-5 no-underline group">
+            <div class="flex items-start gap-4 mb-3">
+              <ToolMark name={p.name} initials={p.initials} color={p.color} size="md" />
+              <div class="flex-1">
+                <div class="flex items-baseline gap-2 flex-wrap">
+                  <span class="font-serif text-lg text-ink" style="font-weight:500">{p.name}</span>
+                  <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">{p.year}</span>
+                </div>
+                <div class="font-mono text-[11px] text-mute">{p.org}</div>
+              </div>
+              <span class="font-mono text-[11px] text-mute group-hover:text-accent">↗</span>
             </div>
-            <p class="text-sub text-[15px]">{p.contribution}</p>
-          </div>
+            <p class="text-sub text-[14px] leading-relaxed">{p.contribution}</p>
+            <p class="mt-3 text-[13px] italic text-accent border-l-2 border-accent-soft/40 pl-3">
+              {p.takeaway}
+            </p>
+          </a>
         ))}
       </div>
     </div>
