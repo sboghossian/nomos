@@ -91,6 +91,8 @@ function printExpr(e: Expression): string {
       return String(e.value);
     case "DateLit":
       return e.value;
+    case "DurationLit":
+      return `${e.rawValue}.${e.unit}${e.rawValue === 1 ? "" : "s"}`;
     case "IdentExpr":
       return e.name;
     case "MemberExpr":
@@ -101,6 +103,8 @@ function printExpr(e: Expression): string {
       return `${printExpr(e.object)}[${printExpr(e.index)}]`;
     case "BinaryExpr":
       return `(${printExpr(e.left)} ${e.op} ${printExpr(e.right)})`;
+    case "UnaryExpr":
+      return `${e.op}${printExpr(e.operand)}`;
     case "IsExpr":
       return `${printExpr(e.subject)} is ${e.predicate}`;
     case "ExtractExpr": {

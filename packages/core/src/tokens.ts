@@ -70,6 +70,7 @@ export const Is = kw("Is", "is");
 export const Human = kw("Human", "human");
 export const True = kw("True", "true");
 export const False = kw("False", "false");
+export const Not = kw("Not", "not");
 
 // ─── Punctuation ───────────────────────────────────────────────────────────
 export const LBrace = createToken({ name: "LBrace", pattern: /\{/ });
@@ -86,6 +87,7 @@ export const Dot = createToken({ name: "Dot", pattern: /\./ });
 export const At = createToken({ name: "At", pattern: /@/ });
 export const Pipe = createToken({ name: "Pipe", pattern: /\|/ });
 export const Equals = createToken({ name: "Equals", pattern: /=(?!=)/ });
+export const Bang = createToken({ name: "Bang", pattern: /!(?!=)/ });
 export const DoubleEquals = createToken({
   name: "DoubleEquals",
   pattern: /==/,
@@ -141,6 +143,7 @@ export const allTokens = [
   Human,
   True,
   False,
+  Not,
 
   Identifier,
 
@@ -169,6 +172,7 @@ export const allTokens = [
   At,
   Pipe,
   Equals,
+  Bang,
   And,
   Or,
 ];

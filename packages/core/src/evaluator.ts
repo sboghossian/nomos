@@ -371,6 +371,9 @@ function operandsOf(
           value: evaluateExpression(expr.subject, env),
         },
       ];
+    case "UnaryExpr":
+      // Show what we're negating, plus its truthiness.
+      return operandsOf(expr.operand, env);
     case "IdentExpr":
     case "MemberExpr":
     case "IndexExpr":
@@ -393,6 +396,10 @@ export function evaluateExpression(expr: Expression, env: Env): Value {
       return { kind: "bool", value: expr.value };
     case "DateLit":
       return { kind: "date", value: expr.value };
+    case "DurationLit":
+      // Canonical runtime representation: months as a number, so Duration
+      // comparisons (`clause.duration <= 24`) Just Work.
+      return { kind: "number", value: expr.months };
 
     case "IdentExpr": {
       const f = env.facts.get(expr.name);
@@ -426,6 +433,12 @@ export function evaluateExpression(expr: Expression, env: Env): Value {
 
     case "BinaryExpr":
       return evaluateBinary(expr, env);
+
+    case "UnaryExpr": {
+      // Only negation for now; extend when we add unary minus etc.
+      const inner = evaluateExpression(expr.operand, env);
+      return { kind: "bool", value: !isTruthy(inner) };
+    }
 
     case "IsExpr": {
       // `x is reasonable` → x.reasonable truthy?
@@ -515,6 +528,8 @@ function snippet(expr: Expression): string {
       return String(expr.value);
     case "DateLit":
       return expr.value;
+    case "DurationLit":
+      return `${expr.rawValue}.${expr.unit}${expr.rawValue === 1 ? "" : "s"}`;
     case "IdentExpr":
       return expr.name;
     case "MemberExpr":
@@ -527,6 +542,8 @@ function snippet(expr: Expression): string {
       return `${snippet(expr.callee)}(…)`;
     case "IndexExpr":
       return `${snippet(expr.object)}[${snippet(expr.index)}]`;
+    case "UnaryExpr":
+      return `${expr.op}${snippet(expr.operand)}`;
     case "ExtractExpr":
       return `extract<…>`;
   }

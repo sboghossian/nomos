@@ -134,6 +134,7 @@ function checkExpression(
     case "StringLit":
     case "BoolLit":
     case "DateLit":
+    case "DurationLit":
       return;
     case "IdentExpr": {
       const known =
@@ -168,6 +169,9 @@ function checkExpression(
     case "BinaryExpr":
       checkExpression(expr.left, symbols, diagnostics);
       checkExpression(expr.right, symbols, diagnostics);
+      return;
+    case "UnaryExpr":
+      checkExpression(expr.operand, symbols, diagnostics);
       return;
     case "IsExpr":
       checkExpression(expr.subject, symbols, diagnostics);

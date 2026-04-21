@@ -137,11 +137,13 @@ export type Expression =
   | StringLit
   | BoolLit
   | DateLit
+  | DurationLit
   | IdentExpr
   | MemberExpr
   | CallExpr
   | IndexExpr
   | BinaryExpr
+  | UnaryExpr
   | ExtractExpr
   | IsExpr;
 
@@ -163,6 +165,20 @@ export interface BoolLit extends Node {
 export interface DateLit extends Node {
   kind: "DateLit";
   value: string; // ISO YYYY-MM-DD
+}
+
+/**
+ * A duration literal — `18.months`, `2.years`, `30.days`, `6.weeks`.
+ * Parsed from <Number>.<unit> sugar. The canonical runtime value is
+ * months (Float) so Duration-annotated fields compare as numbers.
+ */
+export interface DurationLit extends Node {
+  kind: "DurationLit";
+  /** How the user wrote it — used in error messages and pretty-printing. */
+  rawValue: number;
+  unit: "day" | "week" | "month" | "year";
+  /** Canonical value in months (may be fractional for days/weeks). */
+  months: number;
 }
 
 export interface IdentExpr extends Node {
@@ -193,6 +209,16 @@ export interface BinaryExpr extends Node {
   op: "==" | "<=" | ">=" | "<" | ">" | "&&" | "||";
   left: Expression;
   right: Expression;
+}
+
+/**
+ * Unary prefix: `not x`, `!x`. In practice always boolean negation for now.
+ * Parens may wrap any sub-expression.
+ */
+export interface UnaryExpr extends Node {
+  kind: "UnaryExpr";
+  op: "!";
+  operand: Expression;
 }
 
 /**

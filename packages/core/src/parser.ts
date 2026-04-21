@@ -21,6 +21,7 @@ import {
   As,
   At,
   Authority,
+  Bang,
   BlockComment,
   Colon,
   Comma,
@@ -46,6 +47,7 @@ import {
   LineComment,
   Llm,
   NumberLiteral,
+  Not,
   Of,
   Or,
   Pipe,
@@ -92,7 +94,9 @@ import type {
   TypeDecl,
   TypeField,
   TypeRef,
+  UnaryExpr,
   UnionType,
+  DurationLit,
 } from "./ast.js";
 
 // ─── Parser (CST phase) ────────────────────────────────────────────────────
@@ -278,37 +282,37 @@ class NomosCstParser extends CstParser {
   });
 
   private comparison = this.RULE("comparison", () => {
-    this.SUBRULE(this.postfix);
+    this.SUBRULE(this.unary);
     this.OPTION(() =>
       this.OR([
         {
           ALT: () => {
             this.CONSUME(DoubleEquals);
-            this.SUBRULE2(this.postfix);
+            this.SUBRULE2(this.unary);
           },
         },
         {
           ALT: () => {
             this.CONSUME(LessEq);
-            this.SUBRULE3(this.postfix);
+            this.SUBRULE3(this.unary);
           },
         },
         {
           ALT: () => {
             this.CONSUME(GreaterEq);
-            this.SUBRULE4(this.postfix);
+            this.SUBRULE4(this.unary);
           },
         },
         {
           ALT: () => {
             this.CONSUME(LAngle);
-            this.SUBRULE5(this.postfix);
+            this.SUBRULE5(this.unary);
           },
         },
         {
           ALT: () => {
             this.CONSUME(RAngle);
-            this.SUBRULE6(this.postfix);
+            this.SUBRULE6(this.unary);
           },
         },
         {
@@ -320,6 +324,25 @@ class NomosCstParser extends CstParser {
         },
       ]),
     );
+  });
+
+  /** Unary prefix — `not x`, `!x`. Binds tighter than comparison. */
+  private unary = this.RULE("unary", () => {
+    this.OR([
+      {
+        ALT: () => {
+          this.CONSUME(Bang);
+          this.SUBRULE(this.unary);
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME(Not);
+          this.SUBRULE2(this.unary);
+        },
+      },
+      { ALT: () => this.SUBRULE(this.postfix) },
+    ]);
   });
 
   private postfix = this.RULE("postfix", () => {
@@ -717,10 +740,10 @@ function visitLogicalAnd(cst: CstNode): Expression {
 }
 
 function visitComparison(cst: CstNode): Expression {
-  const [leftCst, rightCst] = allSubsOf(cst, "postfix");
-  const left = visitPostfix(leftCst!);
+  const [leftCst, rightCst] = allSubsOf(cst, "unary");
+  const left = visitUnary(leftCst!);
 
-  // `is` check comes *before* early return — `x is foo` has no right-postfix.
+  // `is` check comes *before* early return — `x is foo` has no right-unary.
   if (cst.children["Is"]) {
     const predTok = (cst.children["Identifier"]![0] as IToken).image;
     const isExpr: IsExpr = {
@@ -733,7 +756,7 @@ function visitComparison(cst: CstNode): Expression {
   }
 
   if (!rightCst) return left;
-  const right = visitPostfix(rightCst);
+  const right = visitUnary(rightCst);
   let op: BinaryExpr["op"] = "==";
   if (cst.children["DoubleEquals"]) op = "==";
   else if (cst.children["LessEq"]) op = "<=";
@@ -750,8 +773,74 @@ function visitComparison(cst: CstNode): Expression {
   };
 }
 
+/**
+ * Visit a `unary` CST node. `!x` and `not x` both fold into UnaryExpr{op:"!"}.
+ * When no prefix operator is present, delegate to visitPostfix.
+ */
+function visitUnary(cst: CstNode): Expression {
+  const nested = subOf(cst, "unary");
+  if (nested) {
+    const operand = visitUnary(nested);
+    const unaryExpr: UnaryExpr = {
+      kind: "UnaryExpr",
+      span: spanOf(cst),
+      op: "!",
+      operand,
+    };
+    return unaryExpr;
+  }
+  const postfix = subOf(cst, "postfix");
+  if (postfix) return visitPostfix(postfix);
+  throw new Error("empty unary");
+}
+
+/**
+ * Duration units recognized as sugar on a number literal.
+ * Stored internally as months (Float).
+ */
+const DURATION_UNITS: Record<
+  string,
+  { unit: DurationLit["unit"]; monthsPerUnit: number }
+> = {
+  day: { unit: "day", monthsPerUnit: 1 / 30 },
+  days: { unit: "day", monthsPerUnit: 1 / 30 },
+  week: { unit: "week", monthsPerUnit: 7 / 30 },
+  weeks: { unit: "week", monthsPerUnit: 7 / 30 },
+  month: { unit: "month", monthsPerUnit: 1 },
+  months: { unit: "month", monthsPerUnit: 1 },
+  year: { unit: "year", monthsPerUnit: 12 },
+  years: { unit: "year", monthsPerUnit: 12 },
+};
+
 function visitPostfix(cst: CstNode): Expression {
   let expr: Expression = visitPrimary(subOf(cst, "primary")!);
+
+  // Shortcut: if we see `<NumberLit>.<unit>` with nothing else trailing,
+  // fold into a DurationLit. `18.months`, `2.years`, etc.
+  if (expr.kind === "NumberLit") {
+    const dots = (cst.children["Dot"] ?? []) as IToken[];
+    const idents = (cst.children["Identifier"] ?? []) as IToken[];
+    const lparens = cst.children["LParen"] ?? [];
+    const lbrackets = cst.children["LBracket"] ?? [];
+    if (
+      dots.length === 1 &&
+      idents.length === 1 &&
+      lparens.length === 0 &&
+      lbrackets.length === 0 &&
+      DURATION_UNITS[idents[0]!.image]
+    ) {
+      const info = DURATION_UNITS[idents[0]!.image]!;
+      const lit: DurationLit = {
+        kind: "DurationLit",
+        span: spanOf(cst),
+        rawValue: expr.value,
+        unit: info.unit,
+        months: expr.value * info.monthsPerUnit,
+      };
+      return lit;
+    }
+  }
+
   // Walk the postfix chain in token order.
   // Chevrotain keeps children keyed by construct; we need source order —
   // easiest is to re-walk each child group by startOffset.
@@ -1062,6 +1151,8 @@ function flatExprToString(e: Expression): string {
       return JSON.stringify(e.value);
     case "DateLit":
       return e.value;
+    case "DurationLit":
+      return `${e.rawValue}.${e.unit}${e.rawValue === 1 ? "" : "s"}`;
     case "BoolLit":
       return String(e.value);
     case "IdentExpr":
@@ -1076,6 +1167,8 @@ function flatExprToString(e: Expression): string {
       return `${flatExprToString(e.left)} ${e.op} ${flatExprToString(e.right)}`;
     case "IsExpr":
       return `${flatExprToString(e.subject)} is ${e.predicate}`;
+    case "UnaryExpr":
+      return `${e.op}${flatExprToString(e.operand)}`;
     case "ExtractExpr":
       return `extract<…>`;
   }
