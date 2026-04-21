@@ -39,6 +39,11 @@ function printDecl(d: Declaration): string[] {
         `Query${d.asOf ? ` (as of ${d.asOf})` : ""}`,
         ...indent([printExpr(d.expression)]),
       ];
+    case "PredicateDecl":
+      return [
+        `Predicate ${d.name}(${d.param}${d.paramType ? `: ${printType(d.paramType)}` : ""})`,
+        ...indent([`= ${printExpr(d.body)}`]),
+      ];
   }
 }
 

@@ -22,6 +22,7 @@
 import type {
   BinaryExpr,
   Expression,
+  PredicateDecl,
   Program,
   QueryDecl,
   RuleDecl,
@@ -47,6 +48,18 @@ export interface Env {
   facts: Map<string, Value>;
   /** The query's `as of` date, or today. ISO YYYY-MM-DD. */
   asOf: string;
+  /**
+   * User-defined predicates, keyed by name. Populated automatically from
+   * the program when `evaluate(...)` runs. `is` and call-expressions look
+   * here first before falling back to field access.
+   */
+  predicates?: Map<string, PredicateDecl>;
+  /**
+   * Local lexical bindings, used while evaluating a predicate body. The
+   * parameter name maps to the substituted argument value. Shadowed by
+   * nested predicate calls as you'd expect.
+   */
+  locals?: Map<string, Value>;
 }
 
 // ─── Result + provenance ───────────────────────────────────────────────────
@@ -115,6 +128,14 @@ export function evaluate(
   query: QueryDecl,
   env: Env,
 ): EvalResult {
+  // Collect user-defined predicates once so IsExpr / CallExpr can resolve
+  // them. This is cheap — programs have dozens of predicates at most.
+  if (!env.predicates) {
+    env = { ...env, predicates: new Map() };
+    for (const d of program.declarations) {
+      if (d.kind === "PredicateDecl") env.predicates!.set(d.name, d);
+    }
+  }
   // The v0 query shape is a bare identifier referring to a rule name.
   // (Call-syntax queries like `rule(args)` arrive with explicit rule params.)
   const target = resolveQueryTarget(query);
@@ -402,6 +423,9 @@ export function evaluateExpression(expr: Expression, env: Env): Value {
       return { kind: "number", value: expr.months };
 
     case "IdentExpr": {
+      // Local (predicate parameter) wins over facts.
+      const local = env.locals?.get(expr.name);
+      if (local) return local;
       const f = env.facts.get(expr.name);
       if (f) return f;
       // Unbound identifier → null (with a trace-friendly shape).
@@ -426,10 +450,19 @@ export function evaluateExpression(expr: Expression, env: Env): Value {
       return nullVal;
     }
 
-    case "CallExpr":
-      // v0: calls in expression position are not yet invoked (they're only
-      // used in `authority:` citations, which we stringify separately).
+    case "CallExpr": {
+      // User-defined predicates: reasonable_scope(x) -> run body with
+      // param bound to evaluateExpression(x).
+      if (expr.callee.kind === "IdentExpr") {
+        const pred = env.predicates?.get(expr.callee.name);
+        if (pred && expr.args.length > 0) {
+          const argVal = evaluateExpression(expr.args[0]!, env);
+          return invokePredicate(pred, argVal, env);
+        }
+      }
+      // Otherwise (authority citations, unknown calls) — not yet invoked.
       return nullVal;
+    }
 
     case "BinaryExpr":
       return evaluateBinary(expr, env);
@@ -441,13 +474,17 @@ export function evaluateExpression(expr: Expression, env: Env): Value {
     }
 
     case "IsExpr": {
-      // `x is reasonable` → x.reasonable truthy?
+      // `x is <name>` — resolve <name> first as a user-defined predicate,
+      // then fall back to boolean field access on the subject object.
       const subj = evaluateExpression(expr.subject, env);
+      const pred = env.predicates?.get(expr.predicate);
+      if (pred) {
+        return invokePredicate(pred, subj, env);
+      }
       if (subj.kind === "object") {
         const v = subj.value[expr.predicate];
         return { kind: "bool", value: v ? isTruthy(v) : false };
       }
-      // Fallback: treat as explicit boolean flag in env under dotted key.
       return { kind: "bool", value: false };
     }
 
@@ -457,6 +494,21 @@ export function evaluateExpression(expr: Expression, env: Env): Value {
       // bind it and we return null.
       return nullVal;
   }
+}
+
+/**
+ * Invoke a user-defined predicate by substituting its parameter with
+ * `arg` and evaluating the body. A fresh `locals` map is created so
+ * recursive calls don't clobber each other.
+ */
+function invokePredicate(pred: PredicateDecl, arg: Value, env: Env): Value {
+  const locals = new Map<string, Value>(env.locals ?? []);
+  locals.set(pred.param, arg);
+  const result = evaluateExpression(pred.body, { ...env, locals });
+  // Coerce non-bool results to bool so predicates always return a boolean.
+  return result.kind === "bool"
+    ? result
+    : { kind: "bool", value: isTruthy(result) };
 }
 
 function evaluateBinary(expr: BinaryExpr, env: Env): Value {
@@ -473,6 +525,8 @@ function evaluateBinary(expr: BinaryExpr, env: Env): Value {
 
   if (expr.op === "==")
     return { kind: "bool", value: equalValues(left, right) };
+  if (expr.op === "!=")
+    return { kind: "bool", value: !equalValues(left, right) };
   if (l !== null && r !== null) {
     if (expr.op === "<=") return { kind: "bool", value: l <= r };
     if (expr.op === ">=") return { kind: "bool", value: l >= r };

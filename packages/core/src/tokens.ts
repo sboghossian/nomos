@@ -71,6 +71,7 @@ export const Human = kw("Human", "human");
 export const True = kw("True", "true");
 export const False = kw("False", "false");
 export const Not = kw("Not", "not");
+export const Predicate = kw("Predicate", "predicate");
 
 // ─── Punctuation ───────────────────────────────────────────────────────────
 export const LBrace = createToken({ name: "LBrace", pattern: /\{/ });
@@ -92,6 +93,7 @@ export const DoubleEquals = createToken({
   name: "DoubleEquals",
   pattern: /==/,
 });
+export const NotEquals = createToken({ name: "NotEquals", pattern: /!=/ });
 export const LessEq = createToken({ name: "LessEq", pattern: /<=/ });
 export const GreaterEq = createToken({ name: "GreaterEq", pattern: />=/ });
 export const And = createToken({ name: "And", pattern: /∧|&&/ });
@@ -144,11 +146,13 @@ export const allTokens = [
   True,
   False,
   Not,
+  Predicate,
 
   Identifier,
 
   // Multi-char punctuation before single-char
   DoubleEquals,
+  NotEquals,
   LessEq,
   GreaterEq,
 

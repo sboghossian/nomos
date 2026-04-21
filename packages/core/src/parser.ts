@@ -29,6 +29,7 @@ import {
   Defeats,
   Dot,
   DoubleEquals,
+  NotEquals,
   Equals,
   Extract,
   Fact,
@@ -51,6 +52,7 @@ import {
   Of,
   Or,
   Pipe,
+  Predicate,
   Priority,
   Query,
   RAngle,
@@ -97,6 +99,7 @@ import type {
   UnaryExpr,
   UnionType,
   DurationLit,
+  PredicateDecl,
 } from "./ast.js";
 
 // ─── Parser (CST phase) ────────────────────────────────────────────────────
@@ -122,7 +125,24 @@ class NomosCstParser extends CstParser {
       { ALT: () => this.SUBRULE(this.ruleDecl) },
       { ALT: () => this.SUBRULE(this.factDecl) },
       { ALT: () => this.SUBRULE(this.queryDecl) },
+      { ALT: () => this.SUBRULE(this.predicateDecl) },
     ]);
+  });
+
+  // ─── Predicate ──────────────────────────────────────────────────────────
+  // predicate reasonable(g: Geography) = g.reasonable && g.region != "world"
+  private predicateDecl = this.RULE("predicateDecl", () => {
+    this.CONSUME(Predicate);
+    this.CONSUME(Identifier); // predicate name
+    this.CONSUME(LParen);
+    this.CONSUME2(Identifier); // param name
+    this.OPTION(() => {
+      this.CONSUME(Colon);
+      this.SUBRULE(this.typeRef);
+    });
+    this.CONSUME(RParen);
+    this.CONSUME(Equals);
+    this.SUBRULE(this.expression);
   });
 
   // ─── Types ──────────────────────────────────────────────────────────────
@@ -289,6 +309,12 @@ class NomosCstParser extends CstParser {
           ALT: () => {
             this.CONSUME(DoubleEquals);
             this.SUBRULE2(this.unary);
+          },
+        },
+        {
+          ALT: () => {
+            this.CONSUME(NotEquals);
+            this.SUBRULE7(this.unary);
           },
         },
         {
@@ -561,7 +587,27 @@ function visitDeclaration(cst: CstNode): Declaration {
   if (factDecl) return visitFactDecl(factDecl);
   const queryDecl = subOf(cst, "queryDecl");
   if (queryDecl) return visitQueryDecl(queryDecl);
+  const predicateDecl = subOf(cst, "predicateDecl");
+  if (predicateDecl) return visitPredicateDecl(predicateDecl);
   throw new Error("empty declaration");
+}
+
+function visitPredicateDecl(cst: CstNode): PredicateDecl {
+  const idents = (cst.children["Identifier"] ?? []) as IToken[];
+  const name = idents[0]?.image ?? "<anon>";
+  const param = idents[1]?.image ?? "<anon>";
+  const paramType = subOf(cst, "typeRef")
+    ? visitTypeRef(subOf(cst, "typeRef")!)
+    : null;
+  const body = visitExpression(subOf(cst, "expression")!);
+  return {
+    kind: "PredicateDecl",
+    span: spanOf(cst),
+    name,
+    param,
+    paramType,
+    body,
+  };
 }
 
 function visitTypeDecl(cst: CstNode): TypeDecl {
@@ -759,6 +805,7 @@ function visitComparison(cst: CstNode): Expression {
   const right = visitUnary(rightCst);
   let op: BinaryExpr["op"] = "==";
   if (cst.children["DoubleEquals"]) op = "==";
+  else if (cst.children["NotEquals"]) op = "!=";
   else if (cst.children["LessEq"]) op = "<=";
   else if (cst.children["GreaterEq"]) op = ">=";
   else if (cst.children["LAngle"]) op = "<";

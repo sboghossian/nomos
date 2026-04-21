@@ -15,6 +15,7 @@ import type {
   Declaration,
   Expression,
   FactDecl,
+  PredicateDecl,
   Program,
   RuleDecl,
   TypeDecl,
@@ -24,6 +25,7 @@ export interface SymbolTable {
   types: Map<string, TypeDecl>;
   rules: Map<string, RuleDecl>;
   facts: Map<string, FactDecl>;
+  predicates: Map<string, PredicateDecl>;
 }
 
 export interface Diagnostic {
@@ -43,6 +45,7 @@ export function check(program: Program): CheckResult {
     types: new Map(),
     rules: new Map(),
     facts: new Map(),
+    predicates: new Map(),
   };
   const diagnostics: Diagnostic[] = [];
 
@@ -70,6 +73,10 @@ export function check(program: Program): CheckResult {
       checkExpression(d.value, symbols, diagnostics);
     } else if (d.kind === "QueryDecl") {
       checkExpression(d.expression, symbols, diagnostics);
+    } else if (d.kind === "PredicateDecl") {
+      // The predicate's body is a boolean expression over the param.
+      // We don't track params in the symbol table yet — allow anything.
+      checkExpression(d.body, symbols, diagnostics);
     }
   }
 
@@ -101,6 +108,13 @@ function registerDecl(
         diagnostics.push(dup(d, "fact", d.name));
       } else {
         symbols.facts.set(d.name, d);
+      }
+      break;
+    case "PredicateDecl":
+      if (symbols.predicates.has(d.name)) {
+        diagnostics.push(dup(d, "predicate", d.name));
+      } else {
+        symbols.predicates.set(d.name, d);
       }
       break;
     case "QueryDecl":
@@ -141,6 +155,7 @@ function checkExpression(
         symbols.facts.has(expr.name) ||
         symbols.rules.has(expr.name) ||
         symbols.types.has(expr.name) ||
+        symbols.predicates.has(expr.name) ||
         // Well-known implicit fact: `party` is bound per-query from `parties`.
         // Later we'll make this explicit; for v0, treat it as reserved.
         expr.name === "party" ||

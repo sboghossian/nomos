@@ -29,7 +29,33 @@ export interface Program extends Node {
   declarations: Declaration[];
 }
 
-export type Declaration = TypeDecl | RuleDecl | FactDecl | QueryDecl;
+export type Declaration =
+  | TypeDecl
+  | RuleDecl
+  | FactDecl
+  | QueryDecl
+  | PredicateDecl;
+
+/**
+ * A user-defined predicate — a named boolean function of one argument.
+ *
+ *   predicate reasonable_scope(g: Geography) = g.reasonable && g.region != "worldwide"
+ *
+ * Usage:
+ *   - As a member of `is`:  `clause.scope is reasonable_scope`
+ *   - As a call:            `reasonable_scope(clause.scope)`
+ *
+ * In both cases the argument is substituted for `g` and the body is
+ * evaluated. v0 supports single-parameter predicates; multi-param arrives
+ * when we need it.
+ */
+export interface PredicateDecl extends Node {
+  kind: "PredicateDecl";
+  name: string;
+  param: string;
+  paramType: TypeRef | null;
+  body: Expression;
+}
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 export interface TypeDecl extends Node {
@@ -206,7 +232,7 @@ export interface IndexExpr extends Node {
 
 export interface BinaryExpr extends Node {
   kind: "BinaryExpr";
-  op: "==" | "<=" | ">=" | "<" | ">" | "&&" | "||";
+  op: "==" | "!=" | "<=" | ">=" | "<" | ">" | "&&" | "||";
   left: Expression;
   right: Expression;
 }
