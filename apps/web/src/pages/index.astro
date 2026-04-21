@@ -447,48 +447,123 @@ const stack = [
   <Footer edit="apps/web/src/pages/index.astro" />
 </Layout>
 
-<!-- ───────────── Live verdict demo + scroll reveal ───────────── -->
+<!-- ───────────── Live verdict demo — runs the real evaluator ───────────── -->
 <script>
-  // Scenarios are hard-coded — they match the /play playground's presets.
+  import { parse, evaluate, envFromJson } from '@nomos/core';
+
+  // The same program the playground ships — parsed and evaluated in the
+  // browser on every scenario flip. No hardcoded verdicts.
+  const PROGRAM = `
+type Party {
+  name: String
+  role: "seller" | "buyer" | "employee" | "employer" | "consumer"
+}
+type NonCompete {
+  duration: Duration
+  scope: Geography
+  compensation_pct: Float
+}
+
+rule non_compete_enforceable @ FR from 2016-08-10 {
+  requires clause.duration <= 24
+  requires clause.scope is reasonable
+  requires clause.compensation_pct >= 0.30
+  authority: code_du_travail.art("L1121-1")
+  authority: cass_soc(2002-07-10, "00-45135")
+}
+
+rule consumer_protection_override @ FR priority 100 defeats non_compete_enforceable when party.role == "consumer" {
+  authority: code_conso.art("L212-1")
+}
+
+query non_compete_enforceable as of 2026-04-18
+  `;
+
+  const parsed = parse(PROGRAM);
+  const program = parsed.ast;
+  const query = program
+    ? program.declarations.find((d: any) => d.kind === 'QueryDecl')
+    : null;
+
+  // Scenarios: only the facts change. The evaluator produces the verdict.
   const scenarios = [
     {
       label: 'Employee · fair terms',
-      verdict: 'ENFORCEABLE',
-      verdictClass: 'text-accent',
-      rule: 'non_compete_enforceable',
-      proof: [
-        ['✓', 'clause.duration <= 24', 'true'],
-        ['✓', 'clause.scope is reasonable', 'true'],
-        ['✓', 'clause.compensation_pct >= 0.30', 'true'],
-      ],
-      tiebreaker: null,
+      facts: {
+        party: { name: 'Alice', role: 'employee' },
+        clause: { duration: 18, scope: { reasonable: true }, compensation_pct: 0.35 },
+      },
     },
     {
       label: 'Consumer role · override fires',
-      verdict: 'NOT ENFORCEABLE',
-      verdictClass: 'text-red-700',
-      rule: 'consumer_protection_override',
-      proof: [
-        ['✓', 'non_compete_enforceable', 'satisfied'],
-        ['✓', 'consumer_protection_override', 'satisfied'],
-        ['⚖', 'defeated: non_compete_enforceable', ''],
-      ],
-      tiebreaker:
-        'decided by priority — consumer_protection_override (100) beats non_compete_enforceable (0).',
+      facts: {
+        party: { name: 'Alice', role: 'consumer' },
+        clause: { duration: 18, scope: { reasonable: true }, compensation_pct: 0.35 },
+      },
     },
     {
       label: 'Underpaid (12%) · base rule fails',
-      verdict: 'NOT ENFORCEABLE',
-      verdictClass: 'text-red-700',
-      rule: '— (no rule fired)',
-      proof: [
-        ['✓', 'clause.duration <= 24', 'true'],
-        ['✓', 'clause.scope is reasonable', 'true'],
-        ['✗', 'clause.compensation_pct >= 0.30', 'false'],
-      ],
-      tiebreaker: null,
+      facts: {
+        party: { name: 'Bob', role: 'employee' },
+        clause: { duration: 18, scope: { reasonable: true }, compensation_pct: 0.12 },
+      },
     },
   ];
+
+  function runScenario(i: number) {
+    const s = scenarios[i];
+    if (!program || !query || !s) return null;
+    const env = envFromJson(s.facts, query.asOf ?? '2026-04-18');
+    const r = evaluate(program, query, env);
+    const verdict =
+      r.value.kind === 'bool'
+        ? r.value.value
+          ? 'ENFORCEABLE'
+          : 'NOT ENFORCEABLE'
+        : '—';
+    const verdictClass =
+      r.value.kind === 'bool' && r.value.value ? 'text-accent' : 'text-red-700';
+
+    // Proof bullets: first find the target rule's trace, then if defeated,
+    // show the defeater trace too.
+    const target = r.traces.find((t: any) => t.rule === query.expression.name);
+    const winner = r.winningRule
+      ? r.traces.find((t: any) => t.rule === r.winningRule)
+      : null;
+
+    const proof: [string, string, string][] = [];
+    if (target && target.requirements) {
+      for (const req of target.requirements) {
+        proof.push([
+          req.satisfied ? '✓' : '✗',
+          req.clause,
+          fmtValue(req.value),
+        ]);
+      }
+    }
+    if (r.defeatedRules && r.defeatedRules.length && winner) {
+      proof.push(['⚖', 'defeated by ' + winner.rule, '']);
+    }
+
+    return {
+      label: s.label,
+      verdict,
+      verdictClass,
+      rule: r.winningRule ?? '— (no rule fired)',
+      proof,
+      tiebreaker: r.tiebreaker ? r.tiebreaker.summary : null,
+    };
+  }
+
+  function fmtValue(v: any): string {
+    if (!v) return '';
+    if (v.kind === 'bool') return v.value ? 'true' : 'false';
+    if (v.kind === 'number') return String(v.value);
+    if (v.kind === 'string') return '"' + v.value + '"';
+    if (v.kind === 'date') return v.value;
+    if (v.kind === 'null') return '—';
+    return '';
+  }
 
   const $ = (id: string) => document.getElementById(id);
   const scenarioEl = $('live-scenario');
@@ -506,7 +581,7 @@ const stack = [
   let paused = false;
 
   function render(i: number) {
-    const s = scenarios[i];
+    const s = runScenario(i);
     if (!s) return;
 
     // subtle fade transition
