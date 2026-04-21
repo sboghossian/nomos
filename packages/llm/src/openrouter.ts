@@ -13,6 +13,8 @@
  */
 
 import type { JsonSchema } from "./schema.js";
+import type { Cache } from "./cache.js";
+import { defaultCache } from "./cache.js";
 
 // ─── Model aliases ─────────────────────────────────────────────────────────
 // Small, opinionated. If the user writes the full slug, we pass through.
@@ -55,6 +57,8 @@ export interface ExtractRequest {
   timeoutMs?: number;
   /** Override the OpenRouter base URL (e.g. for testing). */
   baseUrl?: string;
+  /** Cache handle. Pass `null` to force a fresh call; omit for default disk cache. */
+  cache?: Cache | null;
 }
 
 export interface ExtractResponse {
@@ -78,6 +82,24 @@ export async function extractViaOpenRouter(
   const baseUrl = req.baseUrl ?? "https://openrouter.ai/api/v1";
   const model = resolveModel(req.model);
   const timeoutMs = req.timeoutMs ?? 60_000;
+
+  // Cache lookup: same model + source + schema + type + kwargs → reuse.
+  const cache: Cache | null =
+    req.cache === null ? null : (req.cache ?? defaultCache());
+  const cacheKey = {
+    model,
+    source: req.source,
+    schema: req.schema,
+    typeName: req.typeName,
+    kwargs: req.kwargs,
+  };
+  if (cache) {
+    const hit = cache.get(cacheKey);
+    if (hit) {
+      // Mark as cached by zeroing out latency (it's now a disk read, ~1ms).
+      return { ...hit, latencyMs: 0 };
+    }
+  }
 
   const systemPrompt = buildSystemPrompt(req.typeName);
   const userPrompt = buildUserPrompt(req.source, req.kwargs);
@@ -150,7 +172,7 @@ export async function extractViaOpenRouter(
       ? parsed.confidence
       : null;
 
-  return {
+  const response: ExtractResponse = {
     value: parsed.value,
     confidence,
     usage: json.usage
@@ -163,6 +185,9 @@ export async function extractViaOpenRouter(
     model,
     latencyMs,
   };
+
+  if (cache) cache.set(cacheKey, response);
+  return response;
 }
 
 // ─── Prompt building ───────────────────────────────────────────────────────

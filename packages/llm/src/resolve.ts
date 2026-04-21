@@ -35,6 +35,8 @@ export interface ResolveOptions {
   appUrl?: string;
   /** Override OpenRouter base URL (testing). */
   baseUrl?: string;
+  /** Pass a cache instance, `null` to disable, or omit for the default disk cache. */
+  cache?: import("./cache.js").Cache | null;
   /**
    * A host-supplied function that returns the *source text* for the
    * `contract` (or whatever) identifier the user referenced inside
@@ -122,6 +124,7 @@ export async function resolveFacts(
     if (opts.appName !== undefined) req.appName = opts.appName;
     if (opts.appUrl !== undefined) req.appUrl = opts.appUrl;
     if (opts.baseUrl !== undefined) req.baseUrl = opts.baseUrl;
+    if (opts.cache !== undefined) req.cache = opts.cache;
 
     const response = await extractViaOpenRouter(req);
 

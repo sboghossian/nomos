@@ -10,6 +10,16 @@ export {
   type ExtractResponse,
 } from "./openrouter.js";
 
+export {
+  DiskCache,
+  MemoryCache,
+  NullCache,
+  defaultCache,
+  hashCacheKey,
+  type Cache,
+  type CacheKeyParts,
+} from "./cache.js";
+
 export { buildTypeIndex, typeRefToSchema, type JsonSchema } from "./schema.js";
 
 export {

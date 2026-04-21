@@ -35,3 +35,6 @@ yarn-error.log*
 # misc
 .cache/
 coverage/
+
+# LLM extraction cache (content-addressed by model + source + schema)
+.nomos-cache/
