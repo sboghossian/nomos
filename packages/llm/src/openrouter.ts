@@ -17,16 +17,30 @@ import type { Cache } from "./cache.js";
 import { defaultCache } from "./cache.js";
 
 // ─── Model aliases ─────────────────────────────────────────────────────────
-// Small, opinionated. If the user writes the full slug, we pass through.
+// Verified against OpenRouter's /v1/models on 2026-04-21. Users who prefer
+// the full slug can always write it out; these shortcuts just save typing.
 export const MODEL_ALIASES: Record<string, string> = {
+  // Anthropic — Claude 4.x family
   "claude-opus-4-7": "anthropic/claude-opus-4.7",
+  "claude-opus-4-6": "anthropic/claude-opus-4.6",
+  "claude-opus-4-5": "anthropic/claude-opus-4.5",
+  "claude-opus-4-1": "anthropic/claude-opus-4.1",
   "claude-opus-4": "anthropic/claude-opus-4",
+  "claude-sonnet-4-6": "anthropic/claude-sonnet-4.6",
   "claude-sonnet-4-5": "anthropic/claude-sonnet-4.5",
   "claude-sonnet-4": "anthropic/claude-sonnet-4",
-  "claude-haiku-4": "anthropic/claude-haiku-4",
+  "claude-haiku-4-5": "anthropic/claude-haiku-4.5",
+  // OpenAI — GPT 5
   "gpt-5": "openai/gpt-5",
+  "gpt-5-chat": "openai/gpt-5-chat",
+  "gpt-5-codex": "openai/gpt-5-codex",
   "gpt-4o": "openai/gpt-4o",
+  "gpt-4o-mini": "openai/gpt-4o-mini",
+  // Google — Gemini 2.5 + 3.x previews
   "gemini-2-5-pro": "google/gemini-2.5-pro",
+  "gemini-2-5-flash": "google/gemini-2.5-flash",
+  "gemini-3-pro": "google/gemini-3.1-pro-preview",
+  "gemini-3-flash": "google/gemini-3-flash-preview",
 };
 
 export function resolveModel(name: string): string {
