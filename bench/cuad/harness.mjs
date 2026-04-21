@@ -40,7 +40,13 @@ function arg(name, def) {
 
 const CUAD_PATH = arg("cuad", "/tmp/cuad.json");
 const SAMPLES = Number(arg("samples", "10"));
-const MODEL = arg("model", "claude-sonnet-4-5");
+// --models takes precedence; --model is kept for single-model compat.
+const MODELS = arg("models", "")
+  ? arg("models")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+  : [arg("model", "claude-sonnet-4-5")];
 const CATEGORIES = (
   arg(
     "categories",
@@ -98,8 +104,7 @@ for (const [cat, items] of buckets) {
 
 // ─── build a Nomos program per category ────────────────────────────────────
 
-function programFor(category) {
-  // Reasonable schema depending on category:
+function programFor(category, model) {
   const isDate =
     /date|effective|agreement/i.test(category) ||
     category.toLowerCase().includes("date");
@@ -112,7 +117,7 @@ type ${typeName} {
 }
 
 fact result: ${typeName} = extract<${typeName}>(contract_text)
-  using llm("${MODEL}")
+  using llm("${model}")
 
 query result
 `;
@@ -157,89 +162,84 @@ function contains(pred, gold) {
 const started = Date.now();
 const perItem = [];
 
-for (const [category, items] of buckets) {
-  const sample = items.slice(0, SAMPLES);
-  console.log(`\n▸ ${category} (${sample.length})`);
-  const src = programFor(category);
-  const parsed = parseNomos(src);
-  if (!parsed.ast) throw new Error("program parse failed");
+for (const model of MODELS) {
+  console.log(`\n━━ MODEL: ${model} ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  for (const [category, items] of buckets) {
+    const sample = items.slice(0, SAMPLES);
+    console.log(`\n▸ ${category} (${sample.length})`);
+    const src = programFor(category, model);
+    const parsed = parseNomos(src);
+    if (!parsed.ast) throw new Error("program parse failed");
 
-  for (const [i, ex] of sample.entries()) {
-    const env = envFromJson({ contract_text: ex.context }, "2026-04-18");
-    const t0 = Date.now();
-    let verbatim = "";
-    let confidence = null;
-    try {
-      const { env: envOut, facts } = await resolveFacts(parsed.ast, env, {
-        apiKey: API_KEY,
-        appName: "Nomos Benchmark",
-        appUrl: "https://nomos.dashable.dev",
-        resolveSource: (id) => (id === "contract_text" ? ex.context : ""),
-      });
-      const resultFact = envOut.facts.get("result");
-      if (resultFact && resultFact.kind === "object") {
-        const verbatimVal = resultFact.value.verbatim;
-        const valueVal = resultFact.value.value;
-        verbatim =
-          (verbatimVal && verbatimVal.kind === "string"
-            ? verbatimVal.value
-            : valueVal && valueVal.kind === "string"
-              ? valueVal.value
-              : valueVal && valueVal.kind === "date"
+    for (const [i, ex] of sample.entries()) {
+      const env = envFromJson({ contract_text: ex.context }, "2026-04-18");
+      const t0 = Date.now();
+      let verbatim = "";
+      let confidence = null;
+      try {
+        const { env: envOut, facts } = await resolveFacts(parsed.ast, env, {
+          apiKey: API_KEY,
+          appName: "Nomos Benchmark",
+          appUrl: "https://nomos.dashable.dev",
+          resolveSource: (id) => (id === "contract_text" ? ex.context : ""),
+        });
+        const resultFact = envOut.facts.get("result");
+        if (resultFact && resultFact.kind === "object") {
+          const verbatimVal = resultFact.value.verbatim;
+          const valueVal = resultFact.value.value;
+          verbatim =
+            (verbatimVal && verbatimVal.kind === "string"
+              ? verbatimVal.value
+              : valueVal && valueVal.kind === "string"
                 ? valueVal.value
-                : "") ?? "";
+                : valueVal && valueVal.kind === "date"
+                  ? valueVal.value
+                  : "") ?? "";
+        }
+        const meta = facts.result;
+        confidence = meta?.confidence ?? null;
+      } catch (e) {
+        console.error(`  ✗ ${i + 1}/${sample.length} error: ${e.message}`);
+        continue;
       }
-      const meta = facts.result;
-      confidence = meta?.confidence ?? null;
-    } catch (e) {
-      console.error(`  ✗ ${i + 1}/${sample.length} error: ${e.message}`);
-      continue;
+      const t1 = Date.now();
+
+      const em = exactMatch(verbatim, ex.answer);
+      const c = contains(verbatim, ex.answer);
+      const f = f1(verbatim, ex.answer);
+
+      perItem.push({
+        model,
+        category,
+        docId: ex.docId,
+        goldAnswer: ex.answer,
+        extracted: verbatim,
+        confidence,
+        exact_match: em,
+        contains: c,
+        f1: Number(f.toFixed(3)),
+        latencyMs: t1 - t0,
+      });
+
+      const icon = em ? "✓" : c ? "~" : "✗";
+      process.stdout.write(
+        `  ${icon} ${String(i + 1).padStart(2, " ")}/${sample.length}  f1=${f.toFixed(2)}  ${verbatim.slice(0, 60).replace(/\n/g, " ")}\n`,
+      );
     }
-    const t1 = Date.now();
-
-    const em = exactMatch(verbatim, ex.answer);
-    const c = contains(verbatim, ex.answer);
-    const f = f1(verbatim, ex.answer);
-
-    perItem.push({
-      category,
-      docId: ex.docId,
-      goldAnswer: ex.answer,
-      extracted: verbatim,
-      confidence,
-      exact_match: em,
-      contains: c,
-      f1: Number(f.toFixed(3)),
-      latencyMs: t1 - t0,
-    });
-
-    const icon = em ? "✓" : c ? "~" : "✗";
-    process.stdout.write(
-      `  ${icon} ${String(i + 1).padStart(2, " ")}/${sample.length}  f1=${f.toFixed(2)}  ${verbatim.slice(0, 60).replace(/\n/g, " ")}\n`,
-    );
   }
 }
 
 // ─── summary ───────────────────────────────────────────────────────────────
 
-const summary = {
-  ranAt: new Date().toISOString(),
-  model: MODEL,
-  samplesPerCategory: SAMPLES,
-  categories: {},
-  overall: { count: 0, exact_match: 0, contains: 0, mean_f1: 0, mean_conf: 0 },
-  latencyTotalMs: Date.now() - started,
-};
-
-for (const [category] of buckets) {
-  const items = perItem.filter((x) => x.category === category);
-  if (items.length === 0) continue;
+function agg(items) {
+  if (items.length === 0)
+    return { count: 0, exact_match: 0, contains: 0, mean_f1: 0, mean_conf: 0 };
   const em = items.filter((x) => x.exact_match).length;
   const cont = items.filter((x) => x.contains).length;
   const meanF1 = items.reduce((a, x) => a + x.f1, 0) / items.length;
   const meanConf =
     items.reduce((a, x) => a + (x.confidence ?? 0), 0) / items.length;
-  summary.categories[category] = {
+  return {
     count: items.length,
     exact_match: +(em / items.length).toFixed(3),
     contains: +(cont / items.length).toFixed(3),
@@ -248,32 +248,47 @@ for (const [category] of buckets) {
   };
 }
 
-const all = perItem;
-summary.overall.count = all.length;
-summary.overall.exact_match = +(
-  all.filter((x) => x.exact_match).length / (all.length || 1)
-).toFixed(3);
-summary.overall.contains = +(
-  all.filter((x) => x.contains).length / (all.length || 1)
-).toFixed(3);
-summary.overall.mean_f1 = +(
-  all.reduce((a, x) => a + x.f1, 0) / (all.length || 1)
-).toFixed(3);
-summary.overall.mean_conf = +(
-  all.reduce((a, x) => a + (x.confidence ?? 0), 0) / (all.length || 1)
-).toFixed(3);
+const summary = {
+  ranAt: new Date().toISOString(),
+  models: MODELS,
+  samplesPerCategory: SAMPLES,
+  perModel: {},
+  latencyTotalMs: Date.now() - started,
+};
 
+for (const model of MODELS) {
+  const modelItems = perItem.filter((x) => x.model === model);
+  const byCategory = {};
+  for (const [category] of buckets) {
+    byCategory[category] = agg(
+      modelItems.filter((x) => x.category === category),
+    );
+  }
+  summary.perModel[model] = {
+    categories: byCategory,
+    overall: agg(modelItems),
+  };
+}
+
+// Pretty-print: one block per model.
 console.log("\n─── SUMMARY ─────────────────────────────────────────────────");
-console.log("  category                count   EM    contains   F1    conf");
-for (const [cat, s] of Object.entries(summary.categories)) {
+for (const model of MODELS) {
+  const s = summary.perModel[model];
+  console.log(`\n  ${model}`);
   console.log(
-    `  ${cat.padEnd(22)}  ${String(s.count).padStart(5, " ")}  ${s.exact_match.toFixed(2)}    ${s.contains.toFixed(2)}       ${s.mean_f1.toFixed(2)}  ${s.mean_conf.toFixed(2)}`,
+    "    category                count   EM    contains   F1    conf",
+  );
+  for (const [cat, c] of Object.entries(s.categories)) {
+    if (c.count === 0) continue;
+    console.log(
+      `    ${cat.padEnd(22)}  ${String(c.count).padStart(5, " ")}  ${c.exact_match.toFixed(2)}    ${c.contains.toFixed(2)}       ${c.mean_f1.toFixed(2)}  ${c.mean_conf.toFixed(2)}`,
+    );
+  }
+  const o = s.overall;
+  console.log(
+    `    ${"OVERALL".padEnd(22)}  ${String(o.count).padStart(5, " ")}  ${o.exact_match.toFixed(2)}    ${o.contains.toFixed(2)}       ${o.mean_f1.toFixed(2)}  ${o.mean_conf.toFixed(2)}`,
   );
 }
-const o = summary.overall;
-console.log(
-  `  ${"OVERALL".padEnd(22)}  ${String(o.count).padStart(5, " ")}  ${o.exact_match.toFixed(2)}    ${o.contains.toFixed(2)}       ${o.mean_f1.toFixed(2)}  ${o.mean_conf.toFixed(2)}`,
-);
 
 // ─── persist ───────────────────────────────────────────────────────────────
 

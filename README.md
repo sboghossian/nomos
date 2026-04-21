@@ -96,19 +96,23 @@ used, and the rules defeated.
 
 ## Benchmarks — honest CUAD numbers
 
-First public run on the [CUAD dataset](https://www.atticusprojectai.org/cuad)
-(Atticus Project, 20,910 Q/A pairs across 510 commercial contracts).
-Model: `anthropic/claude-sonnet-4.5`. Reproduce: `node bench/cuad/harness.mjs`.
+Cross-model run on the [CUAD dataset](https://www.atticusprojectai.org/cuad)
+(Atticus Project, 20,910 Q/A pairs across 510 commercial contracts) —
+10 samples × 4 categories × 3 models = **120 extractions**.
+Reproduce: `node bench/cuad/harness.mjs --samples 10 --models claude-sonnet-4-5,gpt-4o,gemini-2-5-pro`.
 
-| Category       |   n | Exact match | Contains |       F1 | Confidence |
-| :------------- | --: | ----------: | -------: | -------: | ---------: |
-| Document Name  |   5 |        1.00 |     1.00 |     1.00 |       0.97 |
-| Parties        |   5 |        0.00 |     1.00 |     0.20 |       0.96 |
-| Effective Date |   5 |        0.20 |     0.40 |     0.45 |       0.99 |
-| Governing Law  |   5 |        0.60 |     0.60 |     1.00 |       0.99 |
-| **Overall**    |  20 |    **0.45** | **0.75** | **0.66** |   **0.97** |
+| Model                         |   n | Exact match | Contains |       F1 | Conf |
+| :---------------------------- | --: | ----------: | -------: | -------: | ---: |
+| `anthropic/claude-sonnet-4.5` |  40 |    **0.47** |     0.72 | **0.64** | 0.98 |
+| `openai/gpt-4o`               |  40 |        0.45 | **0.75** |     0.61 | 0.96 |
+| `google/gemini-2.5-pro`       |  40 |        0.38 |     0.72 |     0.61 | 0.98 |
 
-Schema discipline closes most of the Parties / Date gap. Full writeup:
+Frontier models are within 10 points of each other. Confidence is 0.96–0.98
+across every cell, even when exact-match is 0.00 — which is why
+[`extractEnsemble`](./packages/llm/src/ensemble.ts) (cross-model agreement)
+is a much stronger signal than any single model's self-rated confidence.
+
+Full per-category writeup:
 [nomos.dashable.dev/research/benchmarks](https://nomos.dashable.dev/research/benchmarks).
 
 ## Quickstart

@@ -3,37 +3,79 @@ import Layout from '../../layouts/Layout.astro';
 import Nav from '../../components/Nav.astro';
 import Footer from '../../components/Footer.astro';
 
+// ─── Run data ─────────────────────────────────────────────────────────────
+// Numbers come from bench/cuad/results/cuad-2026-04-21T17-30-39-108Z.json —
+// a real run. Paste new numbers here whenever we rerun.
+
 const run = {
   dataset: 'CUAD v1 (Atticus Project)',
   datasetUrl: 'https://www.atticusprojectai.org/cuad',
-  model: 'anthropic/claude-sonnet-4.5',
-  samplesPerCategory: 5,
-  totalSamples: 20,
+  samplesPerCategory: 10,
   categories: 4,
-  date: '2026-04-18',
-  categoryResults: [
-    { category: 'Document Name',  count: 5, em: 1.00, contains: 1.00, f1: 1.00, conf: 0.97 },
-    { category: 'Parties',        count: 5, em: 0.00, contains: 1.00, f1: 0.20, conf: 0.96 },
-    { category: 'Effective Date', count: 5, em: 0.20, contains: 0.40, f1: 0.45, conf: 0.99 },
-    { category: 'Governing Law',  count: 5, em: 0.60, contains: 0.60, f1: 1.00, conf: 0.99 },
+  totalExtractions: 120,
+  date: '2026-04-21',
+  models: [
+    {
+      id: 'anthropic/claude-sonnet-4.5',
+      label: 'Claude Sonnet 4.5',
+      categories: [
+        { name: 'Document Name',  n: 10, em: 1.00, contains: 1.00, f1: 1.00, conf: 0.98 },
+        { name: 'Parties',        n: 10, em: 0.00, contains: 0.90, f1: 0.18, conf: 0.96 },
+        { name: 'Effective Date', n: 10, em: 0.20, contains: 0.30, f1: 0.38, conf: 0.99 },
+        { name: 'Governing Law',  n: 10, em: 0.70, contains: 0.70, f1: 1.00, conf: 0.97 },
+      ],
+      overall: { n: 40, em: 0.47, contains: 0.72, f1: 0.64, conf: 0.98 },
+    },
+    {
+      id: 'openai/gpt-4o',
+      label: 'GPT-4o',
+      categories: [
+        { name: 'Document Name',  n: 10, em: 1.00, contains: 1.00, f1: 1.00, conf: 0.99 },
+        { name: 'Parties',        n: 10, em: 0.00, contains: 0.80, f1: 0.15, conf: 0.95 },
+        { name: 'Effective Date', n: 10, em: 0.20, contains: 0.50, f1: 0.40, conf: 0.97 },
+        { name: 'Governing Law',  n: 10, em: 0.60, contains: 0.70, f1: 0.90, conf: 0.94 },
+      ],
+      overall: { n: 40, em: 0.45, contains: 0.75, f1: 0.61, conf: 0.96 },
+    },
+    {
+      id: 'google/gemini-2.5-pro',
+      label: 'Gemini 2.5 Pro',
+      categories: [
+        { name: 'Document Name',  n: 10, em: 0.80, contains: 0.80, f1: 1.00, conf: 1.00 },
+        { name: 'Parties',        n: 10, em: 0.00, contains: 1.00, f1: 0.19, conf: 0.99 },
+        { name: 'Effective Date', n: 10, em: 0.00, contains: 0.40, f1: 0.28, conf: 0.99 },
+        { name: 'Governing Law',  n: 10, em: 0.70, contains: 0.70, f1: 1.00, conf: 0.93 },
+      ],
+      overall: { n: 40, em: 0.38, contains: 0.72, f1: 0.61, conf: 0.98 },
+    },
   ],
-  overall:                        { count: 20, em: 0.45, contains: 0.75, f1: 0.66, conf: 0.97 },
 };
+
+const cats = run.models[0].categories.map((c) => c.name);
+
+function color(v: number): string {
+  if (v >= 0.8) return 'text-accent font-bold';
+  if (v >= 0.5) return 'text-ink';
+  return 'text-mute';
+}
 ---
 
-<Layout title="Nomos · Benchmarks" description="Honest numbers for extract<T> on the CUAD dataset. First run, 20 samples, Claude Sonnet 4.5.">
+<Layout
+  title="Nomos · Benchmarks"
+  description="Cross-model CUAD benchmark for extract<T>. 120 extractions across Sonnet 4.5, GPT-4o, Gemini 2.5 Pro. Honest wins and losses.">
   <Nav current="/research/benchmarks" />
 
   <article class="reveal max-w-wide mx-auto px-6 md:px-10 py-16 md:py-24">
     <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ Research / Benchmarks</span>
-    <h1 class="mt-4 max-w-[26ch]">How well does <span class="text-accent italic">extract&lt;T&gt;</span> actually work?</h1>
+    <h1 class="mt-4 max-w-[26ch]">
+      How well does <span class="text-accent italic">extract&lt;T&gt;</span> actually work?
+    </h1>
 
     <p class="mt-10 text-xl md:text-2xl max-w-prose text-sub font-serif" style="font-weight:400; line-height:1.45;">
       Nomos's thesis stands or falls on the LLM bridge. This page is
-      where we put real numbers. The first run, on the
-      <a href={run.datasetUrl} target="_blank">Atticus CUAD dataset</a>,
-      tells an honest story: the model is great at structured field names,
-      decent at governing law, and too verbose on parties and dates.
+      where we put real numbers. The second run covers <strong>three
+      different models</strong> on the same 40 questions per model —
+      120 real extractions total. Honest wins, honest losses.
     </p>
 
     <!-- Run meta -->
@@ -43,12 +85,14 @@ const run = {
         <p class="mt-1 font-serif text-lg" style="font-weight:500">{run.dataset}</p>
       </div>
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Model</span>
-        <p class="mt-1 font-mono text-[14px] text-ink">{run.model}</p>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Extractions</span>
+        <p class="mt-1 text-ink">{run.totalExtractions} ({run.samplesPerCategory} × {run.categories} × {run.models.length} models)</p>
       </div>
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Samples</span>
-        <p class="mt-1 text-ink">{run.totalSamples} ({run.samplesPerCategory} × {run.categories} categories)</p>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Models</span>
+        <p class="mt-1 font-mono text-[12px] text-ink leading-relaxed">
+          {run.models.map((m) => m.id).join('  ·  ')}
+        </p>
       </div>
       <div>
         <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">Run date</span>
@@ -58,44 +102,92 @@ const run = {
 
     <hr class="my-14 border-rule" />
 
-    <!-- Results table -->
+    <!-- Per-model overall row -->
     <section>
-      <h2 class="font-serif mb-6">Results by category.</h2>
+      <div class="flex items-baseline gap-4 mb-6">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 01</span>
+        <h2 class="font-serif">Overall, by model.</h2>
+      </div>
 
       <div class="border border-rule overflow-hidden bg-white">
         <div class="grid grid-cols-[2fr_0.8fr_0.8fr_1fr_0.8fr_0.8fr] gap-2 px-4 py-3 bg-cream border-b border-rule text-[11px] font-mono uppercase tracking-[0.14em] text-mute">
-          <span>Category</span>
+          <span>Model</span>
           <span class="text-right">n</span>
           <span class="text-right">EM</span>
           <span class="text-right">Contains</span>
           <span class="text-right">F1</span>
           <span class="text-right">Conf</span>
         </div>
-        {run.categoryResults.map((c) => (
+        {run.models.map((m) => (
           <div class="grid grid-cols-[2fr_0.8fr_0.8fr_1fr_0.8fr_0.8fr] gap-2 px-4 py-3 border-b border-rule text-[14px]">
-            <span class="font-serif" style="font-weight:500">{c.category}</span>
-            <span class="text-right font-mono text-sub">{c.count}</span>
-            <span class={`text-right font-mono ${c.em >= 0.8 ? 'text-accent' : c.em >= 0.5 ? 'text-ink' : 'text-mute'}`}>{c.em.toFixed(2)}</span>
-            <span class={`text-right font-mono ${c.contains >= 0.8 ? 'text-accent' : c.contains >= 0.5 ? 'text-ink' : 'text-mute'}`}>{c.contains.toFixed(2)}</span>
-            <span class={`text-right font-mono ${c.f1 >= 0.8 ? 'text-accent' : c.f1 >= 0.5 ? 'text-ink' : 'text-mute'}`}>{c.f1.toFixed(2)}</span>
-            <span class="text-right font-mono text-sub">{c.conf.toFixed(2)}</span>
+            <div>
+              <p class="font-serif" style="font-weight:500">{m.label}</p>
+              <p class="text-[12px] text-mute font-mono">{m.id}</p>
+            </div>
+            <span class="text-right font-mono text-sub self-center">{m.overall.n}</span>
+            <span class={`text-right font-mono self-center ${color(m.overall.em)}`}>{m.overall.em.toFixed(2)}</span>
+            <span class={`text-right font-mono self-center ${color(m.overall.contains)}`}>{m.overall.contains.toFixed(2)}</span>
+            <span class={`text-right font-mono self-center ${color(m.overall.f1)}`}>{m.overall.f1.toFixed(2)}</span>
+            <span class="text-right font-mono text-sub self-center">{m.overall.conf.toFixed(2)}</span>
           </div>
         ))}
-        <div class="grid grid-cols-[2fr_0.8fr_0.8fr_1fr_0.8fr_0.8fr] gap-2 px-4 py-3 text-[14px] bg-accent-bg">
-          <span class="font-serif font-bold">Overall</span>
-          <span class="text-right font-mono">{run.overall.count}</span>
-          <span class="text-right font-mono text-accent font-bold">{run.overall.em.toFixed(2)}</span>
-          <span class="text-right font-mono text-accent font-bold">{run.overall.contains.toFixed(2)}</span>
-          <span class="text-right font-mono text-accent font-bold">{run.overall.f1.toFixed(2)}</span>
-          <span class="text-right font-mono text-sub">{run.overall.conf.toFixed(2)}</span>
-        </div>
       </div>
 
       <p class="mt-4 text-[13px] text-mute max-w-prose">
+        The three frontier models perform within ~10 points of each other
+        on <strong>contains</strong> and <strong>F1</strong>. Sonnet edges
+        ahead on exact match (0.47), GPT-4o on containment (0.75). Gemini
+        confidence is 0.98 — matching Sonnet despite lower exact-match
+        accuracy, which is exactly the self-rated-confidence problem that
+        motivates the ensemble voting primitive.
+      </p>
+    </section>
+
+    <hr class="my-14 border-rule" />
+
+    <!-- Per-category, per-model grid -->
+    <section>
+      <div class="flex items-baseline gap-4 mb-6">
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 02</span>
+        <h2 class="font-serif">Per category, per model.</h2>
+      </div>
+
+      {cats.map((catName) => {
+        const rows = run.models.map((m) => ({
+          model: m,
+          row: m.categories.find((c) => c.name === catName)!,
+        }));
+        return (
+          <div class="border border-rule bg-white mb-6">
+            <div class="px-4 py-3 border-b border-rule flex items-baseline justify-between">
+              <span class="font-serif text-lg" style="font-weight:500">{catName}</span>
+              <span class="font-mono text-[11px] text-mute">n = {rows[0].row.n} per model</span>
+            </div>
+            <div class="grid grid-cols-[2fr_0.8fr_1fr_0.8fr_0.8fr] gap-2 px-4 py-2 bg-cream border-b border-rule text-[11px] font-mono uppercase tracking-[0.14em] text-mute">
+              <span>Model</span>
+              <span class="text-right">EM</span>
+              <span class="text-right">Contains</span>
+              <span class="text-right">F1</span>
+              <span class="text-right">Conf</span>
+            </div>
+            {rows.map(({ model, row }) => (
+              <div class="grid grid-cols-[2fr_0.8fr_1fr_0.8fr_0.8fr] gap-2 px-4 py-2.5 border-b border-rule text-[14px] last:border-b-0">
+                <span class="font-mono text-[12px] text-sub self-center">{model.id}</span>
+                <span class={`text-right font-mono self-center ${color(row.em)}`}>{row.em.toFixed(2)}</span>
+                <span class={`text-right font-mono self-center ${color(row.contains)}`}>{row.contains.toFixed(2)}</span>
+                <span class={`text-right font-mono self-center ${color(row.f1)}`}>{row.f1.toFixed(2)}</span>
+                <span class="text-right font-mono text-sub self-center">{row.conf.toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+
+      <p class="text-[13px] text-mute max-w-prose">
         <strong>EM</strong>: extracted string equals ground-truth (case-insensitive).
         <strong>Contains</strong>: extracted ⊆ gold or gold ⊆ extracted.
         <strong>F1</strong>: token-level F1 against best ground-truth.
-        <strong>Conf</strong>: self-rated confidence from the model (0–1).
+        <strong>Conf</strong>: self-rated by the model.
       </p>
     </section>
 
@@ -104,40 +196,44 @@ const run = {
     <!-- What this means -->
     <section class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14">
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 02</span>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 03</span>
       </div>
       <div class="max-w-prose">
         <h2 class="font-serif mb-6" style="font-weight:500">What this means.</h2>
         <div class="space-y-5">
-        <p>
-          <strong>Document Name</strong> is a 1.00/1.00 win. Field-name
-          extraction is essentially solved by a good model with a clear
-          schema.
-        </p>
-        <p>
-          <strong>Parties</strong> shows the gap between the LLM's
-          semantics and CUAD's span convention. The model extracts the
-          full party paragraph ("Centrack International, a Florida
-          corporation…"); CUAD's answer is just the party name. Contains
-          = 1.00 because the gold answer is always a substring of what
-          the model returned. F1 = 0.20 because the model returned five
-          extra words per sample.
-        </p>
-        <p>
-          <strong>Effective Date</strong> is where the schema needs work.
-          The model returned long phrases ("This Agreement is entered
-          into on January 13, 2005") instead of dates. A stricter
-          Date-only schema would close most of this gap.
-        </p>
-        <p>
-          <strong>Confidence = 0.97</strong> across the board tells us
-          the model is consistently sure of itself — even when it's
-          wrong on exact match. This is why Nomos routes
-          <code>confidence &lt; 0.95</code> extractions to a human: the
-          model's own score is a ceiling, not a floor. The
-          human-in-loop gate is the thing that makes over-confident
-          outputs safe.
-        </p>
+          <p>
+            <strong>Document Name</strong> is a 1.00/1.00 win for Sonnet
+            and GPT-4o; Gemini lands at 0.80. Field-name extraction is
+            essentially solved when the schema is explicit.
+          </p>
+          <p>
+            <strong>Parties</strong> shows a consistent gap across all
+            three models: <em>contains</em> is 0.80–1.00 but <em>F1</em> is
+            0.15–0.19. The LLM returns the full party paragraph; CUAD
+            wants just the name. A stricter schema (add a
+            <code>canonical_name: String</code> field) would close most of
+            this gap.
+          </p>
+          <p>
+            <strong>Effective Date</strong> is where the shallow schema
+            hurts us. All three models return phrases
+            (<em>"This Agreement is entered into on January 13, 2005"</em>)
+            instead of just dates. The fix is a strict <code>Date</code>-only
+            schema variant for the <code>value</code> field.
+          </p>
+          <p>
+            <strong>Governing Law</strong> ranges from 0.60 to 0.70 EM
+            across models — all correct in spirit, differing only in
+            boilerplate trimming.
+          </p>
+          <p>
+            <strong>Confidence sits at 0.93–1.00 across every model and
+            every category</strong>, even when exact-match is 0.00.
+            That's the core problem self-rated confidence has, and why
+            Nomos ships an <a href={`${'https://github.com/sboghossian/nomos/blob/main/packages/llm/src/ensemble.ts'}`} target="_blank"><code>extractEnsemble</code></a>
+            primitive: cross-model agreement is a much stronger signal
+            than any single model's opinion of itself.
+          </p>
         </div>
       </div>
     </section>
@@ -147,32 +243,33 @@ const run = {
     <!-- Reproduce -->
     <section class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14">
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 03</span>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 04</span>
       </div>
       <div class="max-w-prose">
         <h2 class="font-serif mb-6" style="font-weight:500">Reproduce.</h2>
         <div class="space-y-4">
-        <p>Clone the repo, install, and run the harness:</p>
-        <pre class="astro-code border border-rule bg-white"><code>{`git clone https://github.com/sboghossian/nomos
+          <p>Clone the repo, install, pull CUAD, run the harness:</p>
+          <pre class="astro-code border border-rule bg-white"><code>{`git clone https://github.com/sboghossian/nomos
 cd nomos && npm install && npm run build
 
-# Download CUAD (38MB) from Zenodo
+# Download CUAD (38 MB) from Zenodo
 curl -sL -o /tmp/cuad.zip \\
   "https://zenodo.org/record/4595826/files/CUAD_v1.zip?download=1"
 unzip -oq /tmp/cuad.zip -d /tmp/cuad
 cp /tmp/cuad/CUAD_v1/CUAD_v1.json /tmp/cuad.json
 
-# Run the benchmark
+# Run the cross-model benchmark
 export OPENROUTER_API_KEY=sk-or-...
 node bench/cuad/harness.mjs \\
   --cuad /tmp/cuad.json \\
-  --samples 5 \\
+  --samples 10 \\
   --categories "Document Name,Effective Date,Parties,Governing Law" \\
-  --model claude-sonnet-4-5`}</code></pre>
-        <p class="text-[14px] text-mute">
-          Results land in <code>bench/cuad/results/cuad-&lt;timestamp&gt;.json</code>.
-          Raw per-item scores are included so anyone can audit our numbers.
-        </p>
+  --models "claude-sonnet-4-5,gpt-4o,gemini-2-5-pro"`}</code></pre>
+          <p class="text-[14px] text-mute">
+            Results land in <code>bench/cuad/results/cuad-&lt;timestamp&gt;.json</code>
+            with per-item scores, per-model aggregates, and the raw extracted text.
+            The on-disk LLM cache means a second identical run is free.
+          </p>
         </div>
       </div>
     </section>
@@ -182,15 +279,15 @@ node bench/cuad/harness.mjs \\
     <!-- Roadmap -->
     <section class="grid md:grid-cols-[140px_1fr] gap-6 md:gap-14">
       <div>
-        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 04</span>
+        <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute md:sticky md:top-24">§ 05</span>
       </div>
       <div class="max-w-prose">
         <h2 class="font-serif mb-6" style="font-weight:500">Next runs.</h2>
         <div class="space-y-3 text-[15px]">
-          <p>— <strong>Scale</strong>: 50 samples × 10 categories = 500 extractions for a stabler mean.</p>
-          <p>— <strong>Model comparison</strong>: Sonnet 4.5 vs Opus 4.7 vs GPT-5 vs Gemini 2.5 Pro on the same seed.</p>
-          <p>— <strong>Schema discipline</strong>: compare loose vs strict schemas on Effective Date to quantify the schema-design payoff.</p>
-          <p>— <strong>MAUD</strong>: run the same harness on M&amp;A questions (47k labels, 152 contracts).</p>
+          <p>— <strong>Scale</strong>: 50 samples × 10 categories = 500 per model; 1,500 extractions.</p>
+          <p>— <strong>Strict schemas</strong>: add <code>canonical_name</code> + <code>Date</code>-only variants; quantify the F1 lift.</p>
+          <p>— <strong>Ensemble consensus</strong>: instead of single-model scores, run <code>extractEnsemble</code> with all three and report agreement rates.</p>
+          <p>— <strong>MAUD</strong>: the same harness on 47k M&amp;A labels across 152 contracts.</p>
           <p>— <strong>ACORD</strong>: evaluate retrieval accuracy on 126k query-clause pairs.</p>
           <p class="mt-6 text-[13px] text-mute">
             All results here get posted verbatim — wins and losses. Nomos's credibility rides on the graph, not the hype.
@@ -199,5 +296,6 @@ node bench/cuad/harness.mjs \\
       </div>
     </section>
   </article>
+
   <Footer edit="apps/web/src/pages/research/benchmarks.astro" />
 </Layout>
