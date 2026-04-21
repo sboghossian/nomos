@@ -541,10 +541,14 @@ const scenarios = [
         card.appendChild(p);
       } else {
         const ul = document.createElement('ul');
-        ul.className = 'space-y-1.5 mt-2';
+        ul.className = 'space-y-2 mt-2';
         for (const req of t.requirements) {
           const li = document.createElement('li');
-          li.className = 'font-mono text-[13px] flex items-baseline gap-2';
+          li.className = 'font-mono text-[13px]';
+
+          // Main requirement line
+          const head = document.createElement('div');
+          head.className = 'flex items-baseline gap-2';
           const icon = document.createElement('span');
           icon.textContent = req.satisfied ? '✓' : '✗';
           icon.className = req.satisfied ? 'text-accent' : 'text-red-600';
@@ -557,7 +561,21 @@ const scenarios = [
           const val = document.createElement('span');
           val.textContent = fmtValue(req.value);
           val.className = 'text-sub';
-          li.append(icon, clause, arrow, val);
+          head.append(icon, clause, arrow, val);
+          li.appendChild(head);
+
+          // Operand trace — only on failing requirements
+          if (!req.satisfied && req.operands && req.operands.length) {
+            const ops = document.createElement('ul');
+            ops.className = 'mt-1 ml-6 space-y-0.5 text-[12px] text-mute';
+            for (const op of req.operands) {
+              const opLi = document.createElement('li');
+              opLi.textContent = '· ' + op.expr + ' = ' + fmtValue(op.value);
+              ops.appendChild(opLi);
+            }
+            li.appendChild(ops);
+          }
+
           ul.appendChild(li);
         }
         card.appendChild(ul);

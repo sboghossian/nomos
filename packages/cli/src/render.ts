@@ -64,6 +64,16 @@ function renderTrace(t: RuleTrace): string[] {
     const ri = r.satisfied ? green("✓") : red("✗");
     const val = gray("→ " + formatValue(r.value));
     lines.push(`      ${ri} ${r.clause}  ${val}`);
+
+    // For failing requirements, surface the actual operand values so the
+    // user can see *why* it failed without re-running.
+    if (!r.satisfied && r.operands && r.operands.length > 0) {
+      for (const op of r.operands) {
+        lines.push(
+          `          ${dim("·")} ${dim(op.expr)} ${dim("=")} ${formatValue(op.value)}`,
+        );
+      }
+    }
   }
   return lines;
 }

@@ -54,8 +54,19 @@ export interface Env {
 export interface RuleTrace {
   rule: string;
   satisfied: boolean;
-  /** Why — each requires clause's result + a human-readable snippet. */
-  requirements: { clause: string; satisfied: boolean; value: Value }[];
+  /**
+   * Each requires clause's result + the actual operand values that fed it.
+   * `operands` captures the bindings that drove the check — e.g. for
+   * `clause.duration <= 24`, operands = [{ expr: "clause.duration", value: 18 },
+   * { expr: "24", value: 24 }]. This is what makes "why didn't this rule fire"
+   * answerable without re-running.
+   */
+  requirements: {
+    clause: string;
+    satisfied: boolean;
+    value: Value;
+    operands: { expr: string; value: Value }[];
+  }[];
   /** Authority citation strings from the rule. */
   authorities: string[];
   /** Reason the rule didn't apply, if applicable (out of temporal range, etc.). */
@@ -286,13 +297,19 @@ function evaluateRule(rule: RuleDecl, env: Env): RuleTrace {
 
   // `when` guard. If present, must evaluate to truthy.
   if (rule.when) {
+    const guardOperands = operandsOf(rule.when, env);
     const guardValue = evaluateExpression(rule.when, env);
     if (!isTruthy(guardValue)) {
       return {
         ...base,
         skippedReason: `when-guard failed`,
         requirements: [
-          { clause: snippet(rule.when), satisfied: false, value: guardValue },
+          {
+            clause: snippet(rule.when),
+            satisfied: false,
+            value: guardValue,
+            operands: guardOperands,
+          },
         ],
       };
     }
@@ -302,9 +319,15 @@ function evaluateRule(rule: RuleDecl, env: Env): RuleTrace {
   const requirements: RuleTrace["requirements"] = [];
   let allSatisfied = true;
   for (const req of rule.requires) {
+    const operands = operandsOf(req, env);
     const v = evaluateExpression(req, env);
     const ok = isTruthy(v);
-    requirements.push({ clause: snippet(req), satisfied: ok, value: v });
+    requirements.push({
+      clause: snippet(req),
+      satisfied: ok,
+      value: v,
+      operands,
+    });
     if (!ok) allSatisfied = false;
   }
 
@@ -313,6 +336,49 @@ function evaluateRule(rule: RuleDecl, env: Env): RuleTrace {
     satisfied: allSatisfied,
     requirements,
   };
+}
+
+/**
+ * Capture the operand values that a boolean expression depends on, so the
+ * proof tree can surface concrete values next to failing requirements.
+ * For `clause.duration <= 24` with duration=12, returns:
+ *   [{ expr: "clause.duration", value: 12 }, { expr: "24", value: 24 }]
+ *
+ * Literals are included for symmetry — they're easy to eyeball and avoid
+ * asymmetric rendering. `&&` / `||` recurse into both sides (useful for
+ * compound conditions). `is` captures only the subject.
+ */
+function operandsOf(
+  expr: Expression,
+  env: Env,
+): { expr: string; value: Value }[] {
+  switch (expr.kind) {
+    case "BinaryExpr":
+      if (expr.op === "&&" || expr.op === "||") {
+        return [...operandsOf(expr.left, env), ...operandsOf(expr.right, env)];
+      }
+      return [
+        { expr: snippet(expr.left), value: evaluateExpression(expr.left, env) },
+        {
+          expr: snippet(expr.right),
+          value: evaluateExpression(expr.right, env),
+        },
+      ];
+    case "IsExpr":
+      return [
+        {
+          expr: snippet(expr.subject),
+          value: evaluateExpression(expr.subject, env),
+        },
+      ];
+    case "IdentExpr":
+    case "MemberExpr":
+    case "IndexExpr":
+    case "CallExpr":
+      return [{ expr: snippet(expr), value: evaluateExpression(expr, env) }];
+    default:
+      return [];
+  }
 }
 
 // ─── Expression evaluator ──────────────────────────────────────────────────
