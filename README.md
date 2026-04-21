@@ -25,6 +25,28 @@ OpenFisca (France), Blawx, Logical English (Kowalski), LegalRuleML, and the
 
 ---
 
+## What it does, in 22 seconds
+
+<p align="center">
+  <img src="./docs/media/demo.gif" alt="Nomos demo — typed rules, LLM bridges, defeasibility, proof trees" width="720" />
+</p>
+
+<p align="center">
+  <a href="./docs/media/demo.mp4">▶ 1080p MP4 (2.4 MB)</a>
+  &nbsp;·&nbsp;
+  <a href="https://nomos.dashable.dev/play">Try it live</a>
+</p>
+
+Six frames of the demo:
+
+|                                                                                                   |                                                                                     |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **Hero** <br/> <img src="./docs/media/demo-hero.png" width="380" />                               | **Code** <br/> <img src="./docs/media/demo-code.png" width="380" />                 |
+| **Enforceable** <br/> <img src="./docs/media/demo-verdict-enforceable.png" width="380" />         | **Defeated** <br/> <img src="./docs/media/demo-verdict-defeated.png" width="380" /> |
+| **Operand trace on failure** <br/> <img src="./docs/media/demo-proof-operands.png" width="380" /> | **Live pages** <br/> <img src="./docs/media/home.png" width="380" />                |
+
+---
+
 ## Why Nomos exists
 
 Legal reasoning is already a computation. Statutes define predicates. Facts
@@ -198,6 +220,31 @@ When multiple rules fire, Nomos resolves in this order:
 
 Every tiebreak is recorded in `result.tiebreaker` with a human-readable
 summary.
+
+## Install the Claude Skill
+
+There's a Claude Skill at [`skills/nomos-reason/`](./skills/nomos-reason) that
+teaches Claude to author and evaluate `.nomos` files. Drop it into your
+Claude Code skills directory:
+
+```bash
+# option 1 — symlink from a clone
+git clone https://github.com/sboghossian/nomos ~/src/nomos
+mkdir -p ~/.claude/skills
+ln -s ~/src/nomos/skills/nomos-reason ~/.claude/skills/nomos-reason
+
+# option 2 — download the zipped release artifact
+curl -L -o /tmp/nomos-reason.zip \
+  https://github.com/sboghossian/nomos/releases/latest/download/nomos-reason.zip
+mkdir -p ~/.claude/skills
+unzip -o /tmp/nomos-reason.zip -d ~/.claude/skills/
+```
+
+Restart Claude Code and ask it to write a Nomos program. The trigger
+description is broad enough that it picks up naturally on legal-encoding,
+rule-conflict, and `.nomos`-editing conversations.
+
+Full skill docs: [skills/nomos-reason/README.md](./skills/nomos-reason/README.md).
 
 ## Packages
 

@@ -68,11 +68,14 @@ const stack = [
     <div class="max-w-wide mx-auto px-6 md:px-10 py-2.5 flex items-center justify-between gap-4 text-[12px] md:text-[13px]">
       <span class="text-accent">
         <span class="font-mono uppercase tracking-[0.14em] mr-2">Experimental</span>
-        <span class="hidden md:inline">Side project, built in public. Breaking changes expected. No warranty, no vendor, no company behind it.</span>
+        <span class="hidden md:inline">A side project. Things will break. I'm not a lawyer and this isn't legal advice.</span>
         <span class="md:hidden">Side project · built in public</span>
       </span>
-      <a href="https://github.com/sboghossian/nomos" target="_blank" class="no-underline font-mono text-accent hover:underline whitespace-nowrap">
-        github.com/sboghossian/nomos ↗
+      <a href="https://github.com/sboghossian/nomos" target="_blank" class="no-underline font-mono text-accent hover:underline whitespace-nowrap inline-flex items-center gap-1.5">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        github.com/sboghossian/nomos
       </a>
     </div>
   </div>
@@ -94,9 +97,9 @@ const stack = [
         </h1>
 
         <p class="mt-8 text-xl md:text-2xl max-w-prose text-sub font-serif" style="font-weight:400; line-height:1.45;">
-          Rules carry jurisdiction, date, and authority. LLMs bridge prose to typed facts at the edges.
-          A defeasibility engine resolves conflicts the way judges do. Every output is a proof tree
-          back to statutes and cases.
+          You write rules. An LLM pulls facts out of contracts. When two rules
+          contradict each other (a consumer law against a labour law, say),
+          Nomos picks a winner and shows its work, citations and all.
         </p>
 
         <div class="mt-10 flex flex-wrap gap-3 items-center">
@@ -114,7 +117,7 @@ const stack = [
         </div>
 
         <p class="mt-6 text-[13px] text-mute">
-          No install. No signup. Edit rules + facts in your browser.
+          No install, no signup. Edit the code in your browser.
         </p>
       </div>
 
@@ -191,9 +194,10 @@ const stack = [
           <span class="text-accent">νόμος</span> <span class="text-mute font-sans text-sm">/ˈnomos/</span>
         </p>
         <p class="mt-2 text-sub">
-          Law, custom, rule. The binding norm a community recognizes as authoritative —
-          weighted, contextual, contested. Used by Plato, Aristotle, and H.&thinsp;L.&thinsp;A.&thinsp;Hart to describe
-          what a legal system actually <em>is</em>, before anyone wrote it down.
+          Law, custom, rule — whichever binding norm a community happens to treat as authority.
+          The word is old enough that Plato and Aristotle were already arguing about what it meant,
+          and legal philosophers like H.&thinsp;L.&thinsp;A.&thinsp;Hart were still at it in the last century.
+          I picked it because the English word "law" is already overloaded.
         </p>
       </div>
     </div>
@@ -208,23 +212,22 @@ const stack = [
       </div>
       <div class="max-w-prose space-y-6">
         <p class="text-ink text-lg font-serif leading-[1.55]" style="font-weight:400">
-          Legal reasoning is already a computation. Statutes define predicates.
-          Facts are inputs. Precedent is a priority ordering. Reforms are temporal updates.
-          Judges have been running this computation for two thousand years.
-          Logic programming knew it in the 1970s and couldn't finish the job because
-          the world kept speaking in prose.
+          Law is computation. Logic programming made that literal in the 1970s
+          and then stalled for fifty years, because getting a contract into
+          a computer meant paying a paralegal to retype it into Prolog.
         </p>
         <p>
-          LLMs changed that. Nomos puts the LLM at the edge — a typed bridge from prose
-          to structured facts — and keeps the interior deterministic, defeasible, and
-          auditable. You get the rigor of Catala, the pragmatism of OpenFisca, and the
-          agent-native execution the rules-as-code field has always been missing.
+          LLMs fixed that part. They also introduced a new problem: you can't
+          put a chatbot on the witness stand. So Nomos only uses the LLM at
+          the edge, to read prose. The reasoning itself stays deterministic,
+          so when the verdict is wrong you can point to the rule that's wrong.
         </p>
         <p>
-          Not invented from scratch. Built as a layer on top of fifty years of work —
-          Eyecite for citations, Concerto for types, Akoma Ntoso for legislation,
-          Atticus for evaluation. Roughly fifteen percent new code, eighty-five percent
-          standing on the shoulders of giants.
+          None of this is invented. The citation parser is Eyecite. The
+          evaluation dataset is from the Atticus Project. The idea of default
+          logic for legal rules comes from Sarah Lawsky and the Catala team.
+          I'm mostly soldering other people's work together and adding a
+          couple of new primitives on top.
         </p>
       </div>
     </div>
@@ -240,10 +243,10 @@ const stack = [
         </div>
         <div class="max-w-prose">
           <p>
-            A French non-compete clause, evaluated under the 2016 labour reform —
-            with a consumer-protection rule that <em>defeats</em> enforceability
-            when the employee is acting as a consumer. The LLM extracts
-            structured facts from the PDF; the rule engine does the rest.
+            A French non-compete, evaluated under the post-2016 labour code,
+            with a consumer-protection rule that <em>defeats</em> it when
+            the employee happens to be acting as a consumer. The LLM pulls
+            the clause data out of the PDF; the rule engine takes it from there.
           </p>
         </div>
       </div>
@@ -260,17 +263,18 @@ const stack = [
 
       <div class="mt-8 grid md:grid-cols-2 gap-6 max-w-prose">
         <div>
-          <h4 class="font-serif text-lg mb-1.5" style="font-weight:500">Output — the value.</h4>
+          <h4 class="font-serif text-lg mb-1.5" style="font-weight:500">The verdict.</h4>
           <p class="text-sub text-[15px]">
-            <code class="text-accent">false</code>. The clause is not enforceable;
-            the consumer-protection rule defeats the labour-law rule by priority.
+            <code class="text-accent">false</code>. Not enforceable. The consumer-protection
+            rule wins on priority (100 vs 0) and defeats the labour rule.
           </p>
         </div>
         <div>
-          <h4 class="font-serif text-lg mb-1.5" style="font-weight:500">Output — the proof.</h4>
+          <h4 class="font-serif text-lg mb-1.5" style="font-weight:500">The proof.</h4>
           <p class="text-sub text-[15px]">
-            A tree: <code>L212-1</code> defeated <code>L1121-1</code>, which would have been satisfied
-            by <code>Cass. soc. 2002-07-10 · no. 00-45135</code>. Every fact traced to its source.
+            A tree: <code>L212-1</code> defeated <code>L1121-1</code>, which would otherwise have
+            been satisfied by <code>Cass. soc. 2002-07-10 · no. 00-45135</code>. Every fact gets
+            a citation.
           </p>
         </div>
       </div>
@@ -283,12 +287,15 @@ const stack = [
       <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-16">
         <div>
           <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 03 — Pillars</span>
-          <h2 class="mt-4 font-serif">Four things nothing else has together.</h2>
+          <h2 class="mt-4 font-serif">The four things I think matter.</h2>
         </div>
         <div class="max-w-prose">
           <p>
-            Catala has default logic. OpenFisca has production adoption.
-            LangGraph has agents. None have all four below.
+            Other projects have pieces of this. Catala has the cleanest
+            account of legislative exceptions I've seen. OpenFisca is
+            running actual tax code at national scale. LangGraph is fine
+            at agent plumbing. I don't know of anything that puts all four
+            below in one place.
           </p>
         </div>
       </div>
@@ -301,9 +308,10 @@ const stack = [
           </div>
           <h3 class="font-serif mb-3" style="font-weight:500">Typed LLM bridges.</h3>
           <p>
-            <code>extract&lt;T&gt; using llm(...) verified_by human if confidence &lt; X</code> is a
-            language primitive, not library plumbing. The model returns a typed value, or the
-            compiler rejects it. Low-confidence extractions route to a human automatically.
+            <code>extract&lt;T&gt; using llm(...) verified_by human if confidence &lt; X</code>
+            is a language primitive. You get a typed value back or the compiler
+            complains. If the model isn't confident enough, the extraction
+            goes to a human queue instead of silently being wrong.
           </p>
         </div>
 
@@ -314,9 +322,10 @@ const stack = [
           </div>
           <h3 class="font-serif mb-3" style="font-weight:500">Time and jurisdiction, typed.</h3>
           <p>
-            Rules declare <code>@ FR from 2016-08-10</code>. Queries run
-            <code>as of 2015-01-01</code>. The compiler refuses to apply a
-            post-reform rule to a pre-reform fact, or a French rule to a Lebanese party.
+            A rule declares <code>@ FR from 2016-08-10</code>. A query runs
+            <code>as of 2015-01-01</code>. The compiler won't apply the rule to
+            the fact. I had to get this right first because French law changed
+            in 2016 and every other one of my demos was wrong until I did.
           </p>
         </div>
 
@@ -327,9 +336,10 @@ const stack = [
           </div>
           <h3 class="font-serif mb-3" style="font-weight:500">Defeasibility, by design.</h3>
           <p>
-            Legal rules contradict each other. Specific beats general, later beats earlier,
-            higher court beats lower. Nomos resolves conflicts by priority, specificity, and
-            recency — and tells you which rule defeated which, and why.
+            Law has rules for when rules contradict each other. Nomos ships
+            those rules: priority first, then whichever is more specific,
+            then whichever came later. When two rules fire, the proof tree
+            tells you which won and on what ground.
           </p>
         </div>
 
@@ -340,10 +350,10 @@ const stack = [
           </div>
           <h3 class="font-serif mb-3" style="font-weight:500">Provenance, always.</h3>
           <p>
-            Every value carries the authorities, facts, and rules that produced it.
-            Ask <em>why</em> and you get a proof tree back to statute articles and case
-            numbers — not a vibe, not a hallucination. Regulated industries have always
-            needed this. Now they can have it.
+            Every output is reproducible. If you disagree with a verdict,
+            you can trace it to the requirement that passed, the fact that
+            triggered it, the statute behind the rule. Nothing is a black
+            box. This is the part a compliance officer actually needs.
           </p>
         </div>
       </div>
@@ -360,9 +370,10 @@ const stack = [
         </div>
         <div class="max-w-prose">
           <p>
-            Nomos is roughly fifteen percent new code. The rest is permissively-licensed
-            open source that has already been battle-tested at scale. We reuse, credit,
-            and extend — never rewrite what works.
+            Most of Nomos isn't Nomos. It's Chevrotain parsing tokens into
+            an AST, Eyecite resolving US citations, OpenRouter calling the
+            LLMs, with a few hundred lines of glue between them. I credit
+            everything and link upstream.
           </p>
         </div>
       </div>
@@ -391,13 +402,13 @@ const stack = [
       <div class="grid md:grid-cols-[220px_1fr] gap-10 mb-12">
         <div>
           <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">§ 05 — Prior art</span>
-          <h2 class="mt-4 font-serif">Standing on shoulders.</h2>
+          <h2 class="mt-4 font-serif">Who came before.</h2>
         </div>
         <div class="max-w-prose">
           <p>
-            The rules-as-code tradition is fifty years old. Nomos is not the first attempt.
-            It is an attempt to combine the best of each into something a developer in 2026
-            would actually use.
+            This field is older than I am. Every project below taught me
+            something. A few of their authors are still active, and I'd
+            like to hear from them at some point.
           </p>
         </div>
       </div>
@@ -424,20 +435,25 @@ const stack = [
         <span class="text-accent italic">Audit the reasoning.</span>
       </h2>
       <p class="mt-6 max-w-prose mx-auto">
-        A side project, shipped in the open. Six weekends to v0.1. No company,
-        no roadmap committee — just a language, a compiler, and a web playground.
+        I had six free weekends and wanted to see if this idea held up.
+        It mostly does. It's open, Apache-2.0, no company attached.
+        If you try it and something breaks, tell me.
       </p>
 
       <div class="mt-10 flex flex-wrap gap-3 justify-center">
         <a
           href="https://github.com/sboghossian/nomos"
-          class="inline-block no-underline bg-ink text-cream px-5 py-3 text-[14px] font-medium hover:bg-accent transition-colors link-arrow">
+          target="_blank"
+          class="inline-flex items-center gap-2 no-underline bg-ink text-cream px-5 py-3 text-[14px] font-medium hover:bg-accent transition-colors">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
           Star on GitHub
         </a>
         <a
-          href="#"
+          href="/play"
           class="inline-block no-underline border border-ink px-5 py-3 text-[14px] font-medium hover:bg-ink hover:text-cream transition-colors">
-          Join Discord
+          Open the playground
         </a>
       </div>
     </div>

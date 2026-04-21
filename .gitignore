@@ -38,3 +38,6 @@ coverage/
 
 # LLM extraction cache (content-addressed by model + source + schema)
 .nomos-cache/
+
+# Skill distribution zip (built, attached to releases)
+skills/*.zip

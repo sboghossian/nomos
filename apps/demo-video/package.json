@@ -1,0 +1,22 @@
+{
+  "name": "@nomos/demo-video",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Remotion demo video for the Nomos README.",
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion render src/index.tsx nomos-demo out/demo.mp4 --codec h264 --crf 18",
+    "gif": "remotion render src/index.tsx nomos-demo out/demo.gif --codec gif --fps 15 --width 960"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.282",
+    "@remotion/cli": "^4.0.282"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.6.3"
+  }
+}
