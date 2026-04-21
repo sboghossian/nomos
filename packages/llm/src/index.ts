@@ -20,6 +20,12 @@ export {
   type CacheKeyParts,
 } from "./cache.js";
 
+export {
+  extractEnsemble,
+  type EnsembleRequest,
+  type EnsembleResponse,
+} from "./ensemble.js";
+
 export { buildTypeIndex, typeRefToSchema, type JsonSchema } from "./schema.js";
 
 export {
